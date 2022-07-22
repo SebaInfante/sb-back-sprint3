@@ -1,9 +1,8 @@
 import { Response, Request } from "express";
-import sharp from "sharp";
-import fs from "fs";
 import path from "path";
 import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from 'uuid';
+import { unlink } from 'node:fs';
 
 const xl = require("excel4node");
 const { Op } = require("sequelize");
@@ -21,6 +20,7 @@ import { generarPDF } from "../lib/pdfkit";
 import { ftpDeploy } from "../lib/ftpDeploy";
 import { readQRCode } from "../lib/qr-decode";
 import Company from "../models/Company";
+import { getS3ListPerson, getUrlS3, getUrlS3Docfile, putS3newPerson, putS3newPersonDocfile } from "../lib/s3";
 
 const now = new Date();
 
@@ -83,6 +83,9 @@ export const getPersons = async (req: Request, res: Response) => {
 				limit: 500
 			}
 		);
+		await Persons.map((Person:any)=>{
+			Person.dataValues.URL = getUrlS3(Person.dataValues.empresa, Person.dataValues.avatar, Person.dataValues.id_card)
+		})
 		return res.json(Persons);
 	} catch (error) {
 		console.log(error);
@@ -98,13 +101,11 @@ export const getEmployment = async (req: Request, res: Response) => {
 	try{
 		let employment
 		const id = req.params.id
-        console.log("🚀 ~ file: person.ts ~ line 101 ~ getEmployment ~ id", id)
 		const { userAuth } = req.body;
 
 		(userAuth.role === "USC") 
 			?	employment = await Employment.findAll({ where: {[Op.and]:[ { employee: userAuth.id }, {deleted_flag:0}] }  })
 			:	employment = await Employment.findAll({ where: {[Op.and]:[ { employee: id }, {deleted_flag:0}] }  })
-        console.log("🚀 ~ file: person.ts ~ line 107 ~ getEmployment ~ employment", employment)
 
 		if (employment.length == 0) {
 			employment 	= 	[{	id: 1, employment: "No seleccionado"}];
@@ -159,12 +160,8 @@ export const getFichaPerson = async (req: Request, res: Response) => {
 		const rut = req.params.rut;
 		const Filename = `${uuidv4()}.pdf`;
 		const Persons = await Person.findOne({where: {[Op.and]: [{person_no: {[Op.substring]: rut}},{deleted_flag: 0}]}});
-
 		await generarPDF(Persons, Filename);
-
-		let url = path.join(__dirname, "../..", "uploads/fichas", Filename);
 		setTimeout(() => { 
-			// res.download(url);
 			return res.status(200).json(Filename)
 		}, 3000);
 
@@ -182,11 +179,11 @@ export const getPerson = async (req: Request, res: Response) => {
 	try{
 		const rut = req.params.rut;
 		const Person_find = await Person.findOne({where:{ [Op.and]:[ { person_no : rut }, { deleted_flag:0 } ] }});
+		Person_find.dataValues.URL = getUrlS3(Person_find.dataValues.employee_name, Person_find.dataValues.avatar_url, Person_find.dataValues.person_no)
 		const Employee_find = await Employee.findOne({where:{ [Op.and]:[ { person_no : rut }, { deleted_flag:0 } ] }});
 		const Docfile_find = await Docfile.findAll({where:{ [Op.and]:[ { person_no : rut }, { deleted_flag:0 } ] }});
-        console.log("🚀 ~ file: person.ts ~ line 187 ~ getPerson ~ Person_find", Person_find)
 
-		return res.json({ Person_find, Docfile_find, Employee_find});
+		return res.json({ Person_find, Docfile_find, Employee_find });
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });
@@ -217,11 +214,7 @@ export const getAllEmployment = async (req: Request, res: Response) => {
 export const getDocumentsPerson = async (req: Request, res: Response) => {
 	try {
 		const { idDoc, id_person } = req.body;
-        console.log("🚀 ~ file: person.ts ~ line 220 ~ getDocumentsPerson ~ id_person", id_person)
-        console.log("🚀 ~ file: person.ts ~ line 220 ~ getDocumentsPerson ~ idDoc", idDoc)
-
 		const Docfile_find = await Docfile.findAll({where:{ [Op.and]:[ { person_no : id_person }, { document_id : idDoc }, { deleted_flag:0 } ] }});
-        console.log("🚀 ~ file: person.ts ~ line 222 ~ getDocumentsPerson ~ Docfile_find", Docfile_find)
 		
 		return res.json(Docfile_find);
 	} catch (error) {
@@ -250,10 +243,12 @@ export const getDocuments = async (req: Request, res: Response) => {
 // ************************************************************************************************************************
 
 export const downloadDoc = async (req: Request, res: Response) => {
+	console.log(req.body);
+	
 	try {
-		let filename = req.params.resource_url;
-		let url = path.join(__dirname, "../..", "documents", filename);
-		res.status(200).download(url);
+		const url = getUrlS3Docfile(req.body.group_name,req.body.name, req.body.person_no)
+		res.status(200).json(url);
+
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });
@@ -300,23 +295,18 @@ export const validarRut = async (req: Request, res: Response) => {
 
 export const addPerson = async (req: Request, res: Response) => {
 	const { person_no, name, gender, email, employee, employment, qr_url, userAuth } = req.body
-    console.log("🚀 ~ file: person.ts ~ line 295 ~ addPerson ~ qr_url", qr_url)
 	const imagen = req.file;
 	const Filename = `${uuidv4()}.png`;
 
-	const UsuarioExiste = await Person.findOne({where: { person_no, deleted_flag: 1 }});
+	const UsuarioExiste = await Person.findOne({where: { person_no }});
 	const Employee_find = await Company.findOne({where: { id: employee }});
 	const Employment_find = await Employment.findOne({where: { id: employment }});
 
-	const processedImage = sharp(imagen?.buffer);
-	const resizedImageBuffer = await processedImage.resize(700, 700, { fit: "cover", background: "#FFF" }).toBuffer()
-	fs.writeFileSync(`uploads/${Filename}`, resizedImageBuffer); //Aqui se crea la imagen
-	let localRoot = path.join(__dirname, "../..", "uploads");
-
-	await ftpDeploy("/avatar","*.png", localRoot)
+	const addPersonBucket = putS3newPerson(imagen,Employee_find.name,person_no, Filename)
 
 	try {
 		if(UsuarioExiste){
+			
 			const updatePerson = {
 				person_name:name,
 				gender,
@@ -327,28 +317,25 @@ export const addPerson = async (req: Request, res: Response) => {
 				status:1,
 				avatar_url : Filename,
 				avatar_alias : imagen?.originalname,
-				avatar_size : Math.trunc(resizedImageBuffer.byteLength / 1000),
+				avatar_size : imagen?.size,
 				avatar_dimensions : "700*700",
 				avatar_suffix : ".png",
-				update_time: formatDate(now),
+				update_time: formatDate(new Date()),
 				update_user : userAuth.name,
 				deleted_flag: 0
 			}
-            console.log("🚀 ~ file: person.ts ~ line 326 ~ addPerson ~ updatePerson", updatePerson)
-			let person = await Person.update( updatePerson , { where: { person_no: person_no } });
-			console.log("🚀 ~ file: person.ts ~ line 329 ~ addPerson ~ person", person)
+			await Person.update( updatePerson , { where: { person_no: person_no } });
 
 			const updateEmployee = {
 				employer:employee,
 				person_no,
 				employment,
-				update_time: formatDate(now),
+				update_time: formatDate(new Date()),
 				update_user : userAuth.name,
 				deleted_flag: 0
 			}
-			let employeeUpdate = await Employee.update( updateEmployee , { where: { person_no:person_no } });
-            console.log("🚀 ~ file: person.ts ~ line 340 ~ addPerson ~ employeeUpdate", employeeUpdate)
-            return res.status(200)
+			await Employee.update( updateEmployee , { where: { person_no:person_no } });
+            return res.status(200).json({status:'ok'})
 		}else{
 			const newPerson = {
 				person_no,
@@ -360,7 +347,7 @@ export const addPerson = async (req: Request, res: Response) => {
 				employment_name : Employment_find.name,
 				avatar_url : Filename,
 				avatar_alias : imagen?.originalname,
-				avatar_size : Math.trunc(resizedImageBuffer.byteLength / 1000),
+				avatar_size : imagen?.size,
 				avatar_dimensions : "700*700",
 				avatar_suffix : ".png",
 				create_user : userAuth.name
@@ -397,15 +384,6 @@ export const photoPreview = async (req: Request, res: Response) => {
         console.log("🚀 ~ file: person.ts ~ line 376 ~ photoPreview ~ req.file", req.file)
 		const idLuxand = req.body.idLuxand
 		
-		// const processedImage = sharp(imagen?.buffer);
-		// const resizedImage = processedImage.resize(700, 700, { fit: "cover", background: "#FFF" });
-
-		// const resizedImageBuffer = await resizedImage.toBuffer();
-
-		// const filename = `${uuidv4()}.png`;
-		// fs.writeFileSync(`uploads/${filename}`, resizedImageBuffer); //Aqui se envia o crea
-		// let url = path.join(__dirname, "../..", "uploads", filename);
-
 		if (req.file) {
 
 			const docfile_url= `documents/${req.file?.filename}`
@@ -460,23 +438,26 @@ export const photoPreview = async (req: Request, res: Response) => {
 export const docsFile = async (req: Request, res: Response) => {
 	try {
 		if (req.file) {
-			const {userAuth, employment_id, person_no, document_name , document_id} = req.body;
+			const file = req.file;
+			const Filename = `${uuidv4()}${path.extname(req.file!.originalname)}`;
+			const {userAuth, employment_id, person_no, document_name , document_id, empresa} = req.body;
+
+			putS3newPersonDocfile(file, empresa, person_no, Filename)
 
 			const newDocfile = {
 				employment_id,
 				person_no,
 				document_name,
 				document_id,
-				docfile_url: `documents/${req.file?.filename}`,
+				docfile_url: Filename,
 				docfile_alias: req.file?.originalname,
 				docfile_size: Math.trunc(req.file?.size / 1000),
 				docfile_suffix: path.extname(req.file!.originalname),
 				create_user: userAuth.name
 			}
 
-			let localRoot = path.join(__dirname, "../..", "documents");
-
-			await ftpDeploy("/documents","*", localRoot)
+			// let localRoot = path.join(__dirname, "../..", "documents");
+			// await ftpDeploy("/documents","*", localRoot)
 
 			const respDocfile = Docfile.build(newDocfile);
 			await respDocfile.save()
@@ -498,50 +479,30 @@ export const IdcardFront = async (req: Request, res: Response) => {
 			const request = require("request");
 			const fs = require("fs");
 
-			const docfile_url= `documents/${req.file?.filename}`
-			let url = path.join(__dirname, "../..", "documents/",req.file?.filename);
+			const docfile_url= `uploads/${req.file?.filename}`
+			let url = path.join(__dirname, "../..", "uploads/",req.file?.filename);
 
 			const options = { 
 				method: 'POST', 
 				url: "https://api.luxand.cloud/subject/v2", 
 				qs: {"name":"","store":"1"}, 
-				headers: { 'token': "944628c81d2347cdac8941c17ab8e866" }, 
+				headers: { 'token': `${process.env.TOKEN_LUXAND}` }, 
 				formData: { photo: fs.createReadStream(url) }
 			}
 			request(options, function (error:any, response:any, body:any) { 
 				if (error) throw new Error(error)
-				console.log(body); 
 				let id = JSON.parse(body)
-                console.log("🚀 ~ file: person.ts ~ line 448 ~ id", id)
-				
+				fs.unlink(url, (err:any) => { if (err) throw err; console.log(url) });
 				return res.status(200).json({id, docfile_url});
 			});
+	
 		}
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });
 	}
 };
-// ************************************************************************************************************************
-// !                                             Agrega documentos usando el rut del usuario.
-// ************************************************************************************************************************
 
-export const IdcardBack = async (req: Request, res: Response) => {
-	try {
-		if (req.file) {
-
-			const docfile_url= `documents/${req.file?.filename}`
-			const infoIdFront = await readQRCode(docfile_url)
-            console.log("🚀 ~ file: person.ts ~ line 432 ~ IdcardBack ~ infoIdFront", infoIdFront)
-		//TODO desfracmentar la info que entrega Rut y codigo de serie
-		//TODO https://portal.sidiv.registrocivil.cl/usuarios-portal/pages/DocumentRequestStatus.xhtml?RUN=18143733-2&type=CEDULA&serial=527886183
-			return res.status(200).json(infoIdFront);
-		}
-	} catch (error) {
-		console.log(error);
-		res.status(500).json({ msg: "Contact the administrator" });
-	}
-};
 
 /// ************************************************************************************************************************
 // !                                             Elimina una persona con todos sus archivos.

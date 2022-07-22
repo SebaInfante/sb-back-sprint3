@@ -1,8 +1,6 @@
 import { Response, Request } from "express";
 import { encriptar } from "../lib/bcrypt";
 import { formatDate } from "../utils/fecha";
-import Document from "../models/Document";
-import Employment from "../models/Employment";
 import User from "../models/user";
 
 const fecha = new Date();
@@ -43,9 +41,7 @@ export const getUserEmpleadoPorMandanteYAdmin = async ( req: Request, res: Respo
 		const userAuth = req.body.userAuth;
 		let users;
 		if (userAuth.role === "USM") {
-			users = await User.findAll({
-			where: { role: "USC", employee: userAuth.id },
-			});
+			users = await User.findAll({where: { role: "USC", employee: userAuth.id }});
 		} else {
 			users = await User.findAll({ where: { role: "USC" } });
 		}
@@ -80,9 +76,8 @@ export const createUser = async (req: Request, res: Response) => {
 	try {
 		const { name, email, password, role, employee = null, userAuth } = req.body;
 		const existsEmail = await User.findOne({ where: { email } }); //Buscar si existe un email
-		if (existsEmail) {
-			return res.status(401).json({ msg: "Email already used" });
-		}
+		if (existsEmail) { return res.status(401).json({ msg: "Email already used" })}
+		
 		const hashPassword = await encriptar(password);
 		const newUser = {
 			name,

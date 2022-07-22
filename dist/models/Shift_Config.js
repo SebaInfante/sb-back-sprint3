@@ -62,7 +62,35 @@ const Shift_Config = connectionResgisters_1.default.define("app_shift_config", {
         allowNull: true
     },
     type: {
-        type: sequelize_1.DataTypes.STRING,
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: true
+    },
+    lunes: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: true
+    },
+    martes: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: true
+    },
+    miercoles: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: true
+    },
+    jueves: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: true
+    },
+    viernes: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: true
+    },
+    sabado: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: true
+    },
+    domingo: {
+        type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: true
     },
     create_time: {

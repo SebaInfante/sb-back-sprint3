@@ -19,8 +19,11 @@ const Employment_1 = __importDefault(require("../models/Employment"));
 const user_1 = __importDefault(require("../models/user"));
 const Company_1 = __importDefault(require("../models/Company"));
 const Shift_Config_1 = __importDefault(require("../models/Shift_Config"));
-const { Op, fn, sequelize, Sequelize } = require("sequelize");
+const { Op } = require("sequelize");
 const fecha = new Date();
+// ************************************************************************************************************************
+// !                                              AGREGAR UNA COMPAÑIA
+// ************************************************************************************************************************
 const addCompany = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name, rut, role, razon, contacto, mandante = null, email = null, fono = null, userAuth } = req.body;
@@ -45,6 +48,9 @@ const addCompany = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.addCompany = addCompany;
+// ************************************************************************************************************************
+// !                                              OBTENGO TODAS LAS COMPAÑIAS
+// ************************************************************************************************************************
 const getAllCompany = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const company = yield Company_1.default.findAll({ where: { deleted_flag: 0 } });
@@ -56,6 +62,9 @@ const getAllCompany = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.getAllCompany = getAllCompany;
+// ************************************************************************************************************************
+// !                                              OBTENGO UNA COMPAÑIA POR UN ID DE EMPRESA
+// ************************************************************************************************************************
 const getCompany = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
@@ -68,6 +77,9 @@ const getCompany = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.getCompany = getCompany;
+// ************************************************************************************************************************
+// !                                              OBTENGO LOS TURNOS POR UN ID DE EMPRESA
+// ************************************************************************************************************************
 const getTurno = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
@@ -80,6 +92,9 @@ const getTurno = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getTurno = getTurno;
+// ************************************************************************************************************************
+// !                                              OBTENGO UNA OCUPACION POR UN ID DE EMPRESA
+// ************************************************************************************************************************
 const getEmployment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
@@ -93,6 +108,9 @@ const getEmployment = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.getEmployment = getEmployment;
+// ************************************************************************************************************************
+// !                                              OBTENGO TODOS LOS MANDANTES
+// ************************************************************************************************************************
 const getAllMandante = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const company = yield Company_1.default.findAll({ where: { role: "USM" } });
@@ -104,6 +122,9 @@ const getAllMandante = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.getAllMandante = getAllMandante;
+// ************************************************************************************************************************
+// !                                              OBTENGO TODAS LAS COMPAÑIAS POR UN MANDANTE
+// ************************************************************************************************************************
 const getAllCompanyMandante = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const mandante = req.params.id;
@@ -116,6 +137,9 @@ const getAllCompanyMandante = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.getAllCompanyMandante = getAllCompanyMandante;
+// ************************************************************************************************************************
+// !                                              OBTENGO TODAS LAS COMPAÑIAS POR UN MANDANTE
+// ************************************************************************************************************************
 const getAllCompanyxMandante = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userAuth = req.body.userAuth;
@@ -128,18 +152,15 @@ const getAllCompanyxMandante = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.getAllCompanyxMandante = getAllCompanyxMandante;
+// ************************************************************************************************************************
+// !                                              AGREGO UN NUEVO TURNO EFECTIVO
+// ************************************************************************************************************************
 const addTurnoEfectivo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { type, company, name, start_time, end_time, start_early, start_late, end_early, end_late, initial_date, final_date, remark = '', userAuth } = req.body;
-        console.log("🚀 ~ file: admin.ts ~ line 84 ~ addTurnoEfectivo ~ type", type);
+        const { type, lunes, martes, miercoles, jueves, viernes, sabado, domingo, company, name, start_time, end_time, start_early, start_late, end_early, end_late, initial_date, final_date, remark = '', userAuth } = req.body;
         const employer = yield Company_1.default.findOne({ where: { [Op.and]: [{ id: company }, { deleted_flag: 0 }] } });
         let tipo;
-        if (type) {
-            tipo = 'Diurno';
-        }
-        else {
-            tipo = 'Nocturno';
-        }
+        type ? tipo = 'Diurno' : tipo = 'Nocturno';
         const newShift = {
             group_id: employer.id,
             group_name: employer.name,
@@ -154,8 +175,17 @@ const addTurnoEfectivo = (req, res) => __awaiter(void 0, void 0, void 0, functio
             initial_date,
             final_date,
             remark,
+            lunes,
+            martes,
+            miercoles,
+            jueves,
+            viernes,
+            sabado,
+            domingo,
             create_user: userAuth.name
         };
+        console.log("🚀 ~ file: admin.ts ~ line 179 ~ addTurnoEfectivo ~ newShift", newShift);
+        // res.json(true);
         const shift_config = Shift_Config_1.default.build(newShift);
         yield shift_config.save();
         res.json(shift_config);
@@ -166,6 +196,9 @@ const addTurnoEfectivo = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.addTurnoEfectivo = addTurnoEfectivo;
+// ************************************************************************************************************************
+// !                                              OBTENGO TODO LOS TURNOS
+// ************************************************************************************************************************
 const getAllTurnos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const shift_config = yield Shift_Config_1.default.findAll({ where: { deleted_flag: 0 } });
@@ -177,6 +210,9 @@ const getAllTurnos = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.getAllTurnos = getAllTurnos;
+// ************************************************************************************************************************
+// !                                              OBTENGO LOS TURNOS DE UNA COMPAÑIA USANDO SU ID
+// ************************************************************************************************************************
 const getTurnosCompany = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
@@ -189,6 +225,9 @@ const getTurnosCompany = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.getTurnosCompany = getTurnosCompany;
+// ************************************************************************************************************************
+// !                                              OBTENGO TODAS LAS OCUPACIONES 
+// ************************************************************************************************************************
 const getAllEmployment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const employment = yield Employment_1.default.findAll({ where: { deleted_flag: 0 } });
@@ -209,20 +248,17 @@ const getAllEmployment = (req, res) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.getAllEmployment = getAllEmployment;
 // ************************************************************************************************************************
-// !                                              CREAR UN NUEVA OCUPACION
+// !                                              AGREGA UNA NUEVA OCUPACION
 // ************************************************************************************************************************
 const addEmployement = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { mandante, employee, employment, userAuth } = req.body;
-        console.log("🚀 ~ file: admin.ts ~ line 148 ~ addEmployement ~ employee", employee);
-        // const employeeItem = await Company.findOne({ where: { id: employee } });
         const newEmployement = {
             mandante,
             employee: employee,
             name: employment,
             create_user: userAuth.name
         };
-        console.log("🚀 ~ file: users.ts ~ line 137 ~ createEmployement ~ newEmployement", newEmployement);
         const employmentItem = Employment_1.default.build(newEmployement);
         yield employmentItem.save();
         res.json(employmentItem);
@@ -234,7 +270,7 @@ const addEmployement = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.addEmployement = addEmployement;
 // ************************************************************************************************************************
-// !                                              CREAR UN NUEVO DOCUMENTO
+// !                                              AGREGA UN NUEVO DOCUMENTO
 // ************************************************************************************************************************
 const addDocument = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -245,9 +281,9 @@ const addDocument = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             require,
             create_user: userAuth.name
         };
-        const DocumentM = Document_1.default.build(newDocument);
-        yield DocumentM.save();
-        res.json(DocumentM);
+        const documentItem = Document_1.default.build(newDocument);
+        yield documentItem.save();
+        res.json(documentItem);
     }
     catch (error) {
         console.log(error);
@@ -271,8 +307,7 @@ const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             update_time: (0, fecha_1.formatDate)(fecha),
             update_user: userAuth.name
         };
-        console.log("🚀 ~ file: admin.ts ~ line 212 ~ deleteUser ~ data", data);
-        yield user.update(data); // Eliminación Logica   //await user.destroy(); Eliminación Fisica
+        yield user.update(data);
         res.json(user);
     }
     catch (error) {
@@ -297,7 +332,7 @@ const deleteCompany = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             update_time: (0, fecha_1.formatDate)(fecha),
             update_user: userAuth.name
         };
-        yield company.update(data); // Eliminación Logica   //await user.destroy(); Eliminación Fisica
+        yield company.update(data);
         res.json(company);
     }
     catch (error) {
@@ -322,7 +357,7 @@ const deleteTurno = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             update_time: (0, fecha_1.formatDate)(fecha),
             update_user: userAuth.name
         };
-        yield shift.update(data); // Eliminación Logica   //await user.destroy(); Eliminación Fisica
+        yield shift.update(data);
         res.json(shift);
     }
     catch (error) {
@@ -347,7 +382,7 @@ const deleteEmploment = (req, res) => __awaiter(void 0, void 0, void 0, function
             update_time: (0, fecha_1.formatDate)(fecha),
             update_user: userAuth.name
         };
-        yield employment.update(data); // Eliminación Logica   //await user.destroy(); Eliminación Fisica
+        yield employment.update(data);
         res.json(employment);
     }
     catch (error) {
@@ -357,7 +392,7 @@ const deleteEmploment = (req, res) => __awaiter(void 0, void 0, void 0, function
 });
 exports.deleteEmploment = deleteEmploment;
 // ************************************************************************************************************************
-// !                                              VER TODOS LOS USUARIOS
+// !                                              OBTENGO TODOS LOS USUARIOS
 // ************************************************************************************************************************
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -371,7 +406,7 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.getUsers = getUsers;
 // ************************************************************************************************************************
-// !                                              VER SOLO UN USUARIO
+// !                                              OBTENGO SOLO UN USUARIO USANDO UN ID
 // ************************************************************************************************************************
 const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

@@ -53,9 +53,7 @@ const getUserEmpleadoPorMandanteYAdmin = (req, res) => __awaiter(void 0, void 0,
         const userAuth = req.body.userAuth;
         let users;
         if (userAuth.role === "USM") {
-            users = yield user_1.default.findAll({
-                where: { role: "USC", employee: userAuth.id },
-            });
+            users = yield user_1.default.findAll({ where: { role: "USC", employee: userAuth.id } });
         }
         else {
             users = yield user_1.default.findAll({ where: { role: "USC" } });

@@ -1,16 +1,18 @@
 import { Response, Request } from "express";
-import { encriptar } from "../lib/bcrypt";
 import { formatDate } from "../utils/fecha";
 import Document from "../models/Document";
 import Employment from "../models/Employment";
 import User from "../models/user";
 import Company from "../models/Company";
 import Shift_Config from "../models/Shift_Config";
-const { Op,fn, sequelize , Sequelize } = require("sequelize");
-
+const { Op } = require("sequelize");
 
 const fecha = new Date();
 
+
+// ************************************************************************************************************************
+// !                                              AGREGAR UNA COMPAÑIA
+// ************************************************************************************************************************
 export const addCompany = async (req: Request, res: Response) => {
 	try {
 		const { name, rut, role,razon, contacto, mandante = null, email = null, fono = null, userAuth } = req.body;
@@ -33,9 +35,13 @@ export const addCompany = async (req: Request, res: Response) => {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });
     }
-    
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO TODAS LAS COMPAÑIAS
+// ************************************************************************************************************************
 export const getAllCompany = async (req: Request, res: Response) => {
     try{
         const company = await Company.findAll({where:{deleted_flag:0}});
@@ -46,6 +52,11 @@ export const getAllCompany = async (req: Request, res: Response) => {
     }
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO UNA COMPAÑIA POR UN ID DE EMPRESA
+// ************************************************************************************************************************
 export const getCompany = async (req: Request, res: Response) => {
     try{
         const id = req.params.id;
@@ -56,6 +67,12 @@ export const getCompany = async (req: Request, res: Response) => {
         res.status(500).json({ msg: "Contact the administrator" });
     }
 }
+
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO LOS TURNOS POR UN ID DE EMPRESA
+// ************************************************************************************************************************
 export const getTurno = async (req: Request, res: Response) => {
     try{
         const id = req.params.id;
@@ -67,6 +84,11 @@ export const getTurno = async (req: Request, res: Response) => {
     }
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO UNA OCUPACION POR UN ID DE EMPRESA
+// ************************************************************************************************************************
 export const getEmployment = async (req: Request, res: Response) => {
     try{
         const id = req.params.id;
@@ -79,6 +101,11 @@ export const getEmployment = async (req: Request, res: Response) => {
     }
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO TODOS LOS MANDANTES
+// ************************************************************************************************************************
 export const getAllMandante = async (req: Request, res: Response) => {
     try{
         const company = await Company.findAll({ where: { role: "USM" } });
@@ -89,6 +116,11 @@ export const getAllMandante = async (req: Request, res: Response) => {
     }
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO TODAS LAS COMPAÑIAS POR UN MANDANTE
+// ************************************************************************************************************************
 export const getAllCompanyMandante = async (req: Request, res: Response) => {
     try{
         const mandante = req.params.id;
@@ -100,6 +132,11 @@ export const getAllCompanyMandante = async (req: Request, res: Response) => {
     }
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO TODAS LAS COMPAÑIAS POR UN MANDANTE
+// ************************************************************************************************************************
 export const getAllCompanyxMandante = async (req: Request, res: Response) => {
     try{
         const userAuth = req.body.userAuth
@@ -111,17 +148,17 @@ export const getAllCompanyxMandante = async (req: Request, res: Response) => {
     }
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              AGREGO UN NUEVO TURNO EFECTIVO
+// ************************************************************************************************************************
 export const addTurnoEfectivo = async (req: Request, res: Response) => {
 	try {
-		const {type, company,name, start_time, end_time, start_early, start_late, end_early, end_late, initial_date, final_date, remark='', userAuth } = req.body;
-        console.log("🚀 ~ file: admin.ts ~ line 84 ~ addTurnoEfectivo ~ type", type)
+		const { type, lunes, martes, miercoles, jueves, viernes, sabado, domingo, company,name, start_time, end_time, start_early, start_late, end_early, end_late, initial_date, final_date, remark='', userAuth } = req.body;
         const employer = await Company.findOne({where:{[Op.and]:[{id:company},{deleted_flag:0}]}})
         let tipo:any
-        if (type) {
-            tipo='Diurno'
-        }else{
-            tipo='Nocturno'
-        }
+		type ? tipo='Diurno' : tipo='Nocturno'
 
         const newShift = {
             group_id:employer.id,
@@ -137,8 +174,19 @@ export const addTurnoEfectivo = async (req: Request, res: Response) => {
             initial_date,
             final_date,
             remark,
+			lunes,
+			martes,
+			miercoles,
+			jueves,
+			viernes,
+			sabado,
+			domingo,
             create_user: userAuth.name
         }
+        console.log("🚀 ~ file: admin.ts ~ line 179 ~ addTurnoEfectivo ~ newShift", newShift)
+
+
+		// res.json(true);
 
         const shift_config = Shift_Config.build(newShift);
 		await shift_config.save(); 
@@ -149,6 +197,11 @@ export const addTurnoEfectivo = async (req: Request, res: Response) => {
     }
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO TODO LOS TURNOS
+// ************************************************************************************************************************
 export const getAllTurnos = async (req: Request, res: Response) => {
     try{
         const shift_config = await Shift_Config.findAll({ where: {deleted_flag:0} });
@@ -159,6 +212,11 @@ export const getAllTurnos = async (req: Request, res: Response) => {
     }
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO LOS TURNOS DE UNA COMPAÑIA USANDO SU ID
+// ************************************************************************************************************************
 export const getTurnosCompany = async (req: Request, res: Response) => {
     try{
         const id = req.params.id
@@ -170,11 +228,16 @@ export const getTurnosCompany = async (req: Request, res: Response) => {
     }
 }
 
+
+
+// ************************************************************************************************************************
+// !                                              OBTENGO TODAS LAS OCUPACIONES 
+// ************************************************************************************************************************
 export const getAllEmployment = async (req: Request, res: Response) => {
     try{
         const employment = await Employment.findAll({ where: {deleted_flag:0} });
         const document = await Document.findAll({ where: {deleted_flag:0} });
-        let newOcupacion :any[]= []
+        let newOcupacion:any[] = []
 
         employment.map(ocupacion => {
                 let n_documento = 0
@@ -192,21 +255,20 @@ export const getAllEmployment = async (req: Request, res: Response) => {
 }
 
 
+
 // ************************************************************************************************************************
-// !                                              CREAR UN NUEVA OCUPACION
+// !                                              AGREGA UNA NUEVA OCUPACION
 // ************************************************************************************************************************
 export const addEmployement = async (req: Request, res: Response) => {
 	try {
 		const { mandante, employee, employment, userAuth } = req.body;
-        console.log("🚀 ~ file: admin.ts ~ line 148 ~ addEmployement ~ employee", employee)
-		// const employeeItem = await Company.findOne({ where: { id: employee } });
 		const newEmployement = {
 			mandante,
 			employee: employee,
 			name:employment,
 			create_user: userAuth.name
 		};
-		console.log("🚀 ~ file: users.ts ~ line 137 ~ createEmployement ~ newEmployement", newEmployement)
+
 		const employmentItem = Employment.build(newEmployement);
 		await employmentItem.save();
 		res.json(employmentItem);
@@ -215,8 +277,11 @@ export const addEmployement = async (req: Request, res: Response) => {
 		res.status(500).json({ msg: "Contact the administrator" });
 	}
 };
+
+
+
 // ************************************************************************************************************************
-// !                                              CREAR UN NUEVO DOCUMENTO
+// !                                              AGREGA UN NUEVO DOCUMENTO
 // ************************************************************************************************************************
 export const addDocument = async (req: Request, res: Response) => {
 	try {
@@ -228,14 +293,15 @@ export const addDocument = async (req: Request, res: Response) => {
             require,
 			create_user: userAuth.name
 		};
-		const DocumentM = Document.build(newDocument);
-		await DocumentM.save();
-		res.json(DocumentM);
+		const documentItem = Document.build(newDocument);
+		await documentItem.save();
+		res.json(documentItem);
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });
 	}
 };
+
 
 
 // ************************************************************************************************************************
@@ -246,23 +312,24 @@ export const deleteUser = async (req: Request, res: Response) => {
 		const { id } = req.params;
 		const { userAuth } = req.body;
 		const user = await User.findByPk(id);
-		if (!user) {
-			return res.status(404).json({ msg: "User not found" });
-		}
+		if (!user) { return res.status(404).json({ msg: "User not found" }) }
 
 		const data = {
 			deleted_flag: 1, 
 			update_time : formatDate(fecha),
 			update_user : userAuth.name
 		}
-        console.log("🚀 ~ file: admin.ts ~ line 212 ~ deleteUser ~ data", data)
-		await user.update(data); // Eliminación Logica   //await user.destroy(); Eliminación Fisica
+
+		await user.update(data);
 		res.json(user);
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });
 	}
 };
+
+
+
 // ************************************************************************************************************************
 // !                                              ELIMINAR UNA COMPAÑIA
 // ************************************************************************************************************************
@@ -279,13 +346,16 @@ export const deleteCompany = async (req: Request, res: Response) => {
 			update_user : userAuth.name
 		}
 
-		await company.update(data); // Eliminación Logica   //await user.destroy(); Eliminación Fisica
+		await company.update(data); 
 		res.json(company);
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });
 	}
 };
+
+
+
 // ************************************************************************************************************************
 // !                                              ELIMINAR UN TURNO
 // ************************************************************************************************************************
@@ -302,13 +372,17 @@ export const deleteTurno = async (req: Request, res: Response) => {
 			update_user : userAuth.name
 		}
 
-		await shift.update(data); // Eliminación Logica   //await user.destroy(); Eliminación Fisica
+		await shift.update(data);
 		res.json(shift);
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });
 	}
 };
+
+
+
+
 // ************************************************************************************************************************
 // !                                              ELIMINAR UNA OCUPACION
 // ************************************************************************************************************************
@@ -325,7 +399,7 @@ export const deleteEmploment = async (req: Request, res: Response) => {
 			update_user : userAuth.name
 		}
 
-		await employment.update(data); // Eliminación Logica   //await user.destroy(); Eliminación Fisica
+		await employment.update(data);
 		res.json(employment);
 	} catch (error) {
 		console.log(error);
@@ -333,8 +407,11 @@ export const deleteEmploment = async (req: Request, res: Response) => {
 	}
 };
 
+
+
+
 // ************************************************************************************************************************
-// !                                              VER TODOS LOS USUARIOS
+// !                                              OBTENGO TODOS LOS USUARIOS
 // ************************************************************************************************************************
 export const getUsers = async (req: Request, res: Response) => {
 	try{
@@ -345,8 +422,12 @@ export const getUsers = async (req: Request, res: Response) => {
 		res.status(500).json({ msg: "Contact the administrator" });
 	}
 };
+
+
+
+
 // ************************************************************************************************************************
-// !                                              VER SOLO UN USUARIO
+// !                                              OBTENGO SOLO UN USUARIO USANDO UN ID
 // ************************************************************************************************************************
 export const getUser = async (req: Request, res: Response) => {
 	try {

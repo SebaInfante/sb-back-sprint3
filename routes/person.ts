@@ -26,7 +26,6 @@ import {
     downReport,
     getFichaPerson,
     downloadFicha,
-    IdcardBack,
     IdcardFront
 } from "../controllers/person";
 import  storage  from "../lib/multer";
@@ -62,7 +61,7 @@ router.post("/documentsPerson",   [validarJWT], getDocumentsPerson);
 router.post("/documents",         [validarJWT,check("ocupacion", "ocupacion is required").not().isEmpty(), validarCampos], getDocuments);
 
 //TODO Descargo un documento cargado usando el nombre de este.
-router.get("/downloadDoc/:resource_url",     downloadDoc);
+router.post("/downloadDoc",     downloadDoc);
 
 //TODO Descargo un documento cargado usando el nombre de este.
 router.get("/downloadFicha/:resource_url",     downloadFicha);
@@ -77,10 +76,7 @@ router.post("/addPerson",         [ bstorage.single("file"), validarJWT], addPer
 router.post("/photoPreview",      [validarJWT, storage.single("file")], photoPreview);
 
 //TODO Agrega documentos usando el rut del usuario.
-router.post("/docsFile",          [ storage.single("file"), validarJWT], docsFile);
-
-//TODO Agrega documentos usando el rut del usuario.
-router.post("/IdcardBack",        [ storage.single("file"), validarJWT], IdcardBack);
+router.post("/docsFile",          [ bstorage.single("file"), validarJWT], docsFile);
 
 //TODO Agrega documentos usando el rut del usuario.
 router.post("/IdcardFront",        [validarJWT ,storage.single("file")], IdcardFront);

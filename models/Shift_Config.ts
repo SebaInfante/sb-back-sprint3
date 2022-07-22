@@ -60,7 +60,35 @@ const Shift_Config = db.define<any>(
             allowNull:true
         },
         type: {
-            type: DataTypes.STRING,
+            type: DataTypes.BOOLEAN,
+            allowNull:true
+        },
+        lunes: {
+            type: DataTypes.BOOLEAN,
+            allowNull:true
+        },
+        martes: {
+            type: DataTypes.BOOLEAN,
+            allowNull:true
+        },
+        miercoles: {
+            type: DataTypes.BOOLEAN,
+            allowNull:true
+        },
+        jueves: {
+            type: DataTypes.BOOLEAN,
+            allowNull:true
+        },
+        viernes: {
+            type: DataTypes.BOOLEAN,
+            allowNull:true
+        },
+        sabado: {
+            type: DataTypes.BOOLEAN,
+            allowNull:true
+        },
+        domingo: {
+            type: DataTypes.BOOLEAN,
             allowNull:true
         },
         create_time: {

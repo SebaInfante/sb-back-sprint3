@@ -1,11 +1,10 @@
 import path from "path";
+import { getUrlS3 } from "./s3";
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const imageDownloader = require("../lib/image-downloader").download;
 
 export const generarPDF = async (Persons: any, Filename:any) => {
-    let imageUrl:string;
-
     const data ={
         Nombre: Persons.person_name , 
         Avatar: Persons.avatar_url , 
@@ -16,13 +15,11 @@ export const generarPDF = async (Persons: any, Filename:any) => {
     }
 
     try {
-        (data.Avatar.includes('/u/cms/www')) 
-            ?imageUrl = `http://173.249.58.215:9000${data.Avatar}`
-            :imageUrl = `https://rpafactory.cl/sb_webapp/avatar/${data.Avatar}`;
-
-        const extension = imageUrl.split('.').pop();
-        const filenameImg = path.join(__dirname,"../..","uploads/fichas/images",`${data.Rut}.${extension}`);
-        imageDownloader(imageUrl, filenameImg, function () {console.log(`${imageUrl} image download!!`);});
+        const URL = getUrlS3(data.Empresa, data.Avatar, data.Rut)
+        const extension = data.Avatar.split('.').pop();
+        const filenameImg = path.join(__dirname,"../..","uploads/fichas/images",`${data.Rut}.${extension}`); //Aqui es la ruta donde se va a guardar la img
+        
+        imageDownloader(URL, filenameImg, function () {console.log(`Image download!!`)});
 
         setTimeout(() => {
             crearPdf( data.Nombre, filenameImg, data.Rut, data.Email, data.Ocupacion, data.Empresa, Filename)

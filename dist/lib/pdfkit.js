@@ -14,11 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generarPDF = void 0;
 const path_1 = __importDefault(require("path"));
+const s3_1 = require("./s3");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const imageDownloader = require("../lib/image-downloader").download;
 const generarPDF = (Persons, Filename) => __awaiter(void 0, void 0, void 0, function* () {
-    let imageUrl;
     const data = {
         Nombre: Persons.person_name,
         Avatar: Persons.avatar_url,
@@ -28,12 +28,10 @@ const generarPDF = (Persons, Filename) => __awaiter(void 0, void 0, void 0, func
         Empresa: Persons.employee_name
     };
     try {
-        (data.Avatar.includes('/u/cms/www'))
-            ? imageUrl = `http://173.249.58.215:9000${data.Avatar}`
-            : imageUrl = `https://rpafactory.cl/sb_webapp/avatar/${data.Avatar}`;
-        const extension = imageUrl.split('.').pop();
-        const filenameImg = path_1.default.join(__dirname, "../..", "uploads/fichas/images", `${data.Rut}.${extension}`);
-        imageDownloader(imageUrl, filenameImg, function () { console.log(`${imageUrl} image download!!`); });
+        const URL = (0, s3_1.getUrlS3)(data.Empresa, data.Avatar, data.Rut);
+        const extension = data.Avatar.split('.').pop();
+        const filenameImg = path_1.default.join(__dirname, "../..", "uploads/fichas/images", `${data.Rut}.${extension}`); //Aqui es la ruta donde se va a guardar la img
+        imageDownloader(URL, filenameImg, function () { console.log(`Image download!!`); });
         setTimeout(() => {
             crearPdf(data.Nombre, filenameImg, data.Rut, data.Email, data.Ocupacion, data.Empresa, Filename);
             return;

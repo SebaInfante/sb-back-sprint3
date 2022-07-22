@@ -12,9 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.downReport = exports.downloadReportRecords = exports.sendEmailDeletePerson = exports.deleteFile = exports.deletePerson = exports.IdcardBack = exports.IdcardFront = exports.docsFile = exports.photoPreview = exports.addPerson = exports.validarRut = exports.downloadFicha = exports.downloadDoc = exports.getDocuments = exports.getDocumentsPerson = exports.getAllEmployment = exports.getPerson = exports.getFichaPerson = exports.updateDatos = exports.getEmployment = exports.getPersons = void 0;
-const sharp_1 = __importDefault(require("sharp"));
-const fs_1 = __importDefault(require("fs"));
+exports.downReport = exports.downloadReportRecords = exports.sendEmailDeletePerson = exports.deleteFile = exports.deletePerson = exports.IdcardFront = exports.docsFile = exports.photoPreview = exports.addPerson = exports.validarRut = exports.downloadFicha = exports.downloadDoc = exports.getDocuments = exports.getDocumentsPerson = exports.getAllEmployment = exports.getPerson = exports.getFichaPerson = exports.updateDatos = exports.getEmployment = exports.getPersons = void 0;
 const path_1 = __importDefault(require("path"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const uuid_1 = require("uuid");
@@ -28,9 +26,8 @@ const Docfile_1 = __importDefault(require("../models/Docfile"));
 const user_1 = __importDefault(require("../models/user"));
 const fecha_1 = require("../utils/fecha");
 const pdfkit_1 = require("../lib/pdfkit");
-const ftpDeploy_1 = require("../lib/ftpDeploy");
-const qr_decode_1 = require("../lib/qr-decode");
 const Company_1 = __importDefault(require("../models/Company"));
+const s3_1 = require("../lib/s3");
 const now = new Date();
 // ************************************************************************************************************************
 // !                                             Obtengo primero 500 registros de las personas
@@ -88,6 +85,9 @@ const getPersons = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             ],
             limit: 500
         });
+        yield Persons.map((Person) => {
+            Person.dataValues.URL = (0, s3_1.getUrlS3)(Person.dataValues.empresa, Person.dataValues.avatar, Person.dataValues.id_card);
+        });
         return res.json(Persons);
     }
     catch (error) {
@@ -103,12 +103,10 @@ const getEmployment = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         let employment;
         const id = req.params.id;
-        console.log("🚀 ~ file: person.ts ~ line 101 ~ getEmployment ~ id", id);
         const { userAuth } = req.body;
         (userAuth.role === "USC")
             ? employment = yield Employment_1.default.findAll({ where: { [Op.and]: [{ employee: userAuth.id }, { deleted_flag: 0 }] } })
             : employment = yield Employment_1.default.findAll({ where: { [Op.and]: [{ employee: id }, { deleted_flag: 0 }] } });
-        console.log("🚀 ~ file: person.ts ~ line 107 ~ getEmployment ~ employment", employment);
         if (employment.length == 0) {
             employment = [{ id: 1, employment: "No seleccionado" }];
         }
@@ -158,9 +156,7 @@ const getFichaPerson = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const Filename = `${(0, uuid_1.v4)()}.pdf`;
         const Persons = yield Person_1.default.findOne({ where: { [Op.and]: [{ person_no: { [Op.substring]: rut } }, { deleted_flag: 0 }] } });
         yield (0, pdfkit_1.generarPDF)(Persons, Filename);
-        let url = path_1.default.join(__dirname, "../..", "uploads/fichas", Filename);
         setTimeout(() => {
-            // res.download(url);
             return res.status(200).json(Filename);
         }, 3000);
     }
@@ -177,9 +173,9 @@ const getPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const rut = req.params.rut;
         const Person_find = yield Person_1.default.findOne({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
+        Person_find.dataValues.URL = (0, s3_1.getUrlS3)(Person_find.dataValues.employee_name, Person_find.dataValues.avatar_url, Person_find.dataValues.person_no);
         const Employee_find = yield Employee_1.default.findOne({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
         const Docfile_find = yield Docfile_1.default.findAll({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
-        console.log("🚀 ~ file: person.ts ~ line 187 ~ getPerson ~ Person_find", Person_find);
         return res.json({ Person_find, Docfile_find, Employee_find });
     }
     catch (error) {
@@ -211,10 +207,7 @@ exports.getAllEmployment = getAllEmployment;
 const getDocumentsPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { idDoc, id_person } = req.body;
-        console.log("🚀 ~ file: person.ts ~ line 220 ~ getDocumentsPerson ~ id_person", id_person);
-        console.log("🚀 ~ file: person.ts ~ line 220 ~ getDocumentsPerson ~ idDoc", idDoc);
         const Docfile_find = yield Docfile_1.default.findAll({ where: { [Op.and]: [{ person_no: id_person }, { document_id: idDoc }, { deleted_flag: 0 }] } });
-        console.log("🚀 ~ file: person.ts ~ line 222 ~ getDocumentsPerson ~ Docfile_find", Docfile_find);
         return res.json(Docfile_find);
     }
     catch (error) {
@@ -242,10 +235,10 @@ exports.getDocuments = getDocuments;
 // !                                             Descargo un documento cargado usando el nombre de este.
 // ************************************************************************************************************************
 const downloadDoc = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(req.body);
     try {
-        let filename = req.params.resource_url;
-        let url = path_1.default.join(__dirname, "../..", "documents", filename);
-        res.status(200).download(url);
+        const url = (0, s3_1.getUrlS3Docfile)(req.body.group_name, req.body.name, req.body.person_no);
+        res.status(200).json(url);
     }
     catch (error) {
         console.log(error);
@@ -293,17 +286,12 @@ exports.validarRut = validarRut;
 // ************************************************************************************************************************
 const addPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { person_no, name, gender, email, employee, employment, qr_url, userAuth } = req.body;
-    console.log("🚀 ~ file: person.ts ~ line 295 ~ addPerson ~ qr_url", qr_url);
     const imagen = req.file;
     const Filename = `${(0, uuid_1.v4)()}.png`;
-    const UsuarioExiste = yield Person_1.default.findOne({ where: { person_no, deleted_flag: 1 } });
+    const UsuarioExiste = yield Person_1.default.findOne({ where: { person_no } });
     const Employee_find = yield Company_1.default.findOne({ where: { id: employee } });
     const Employment_find = yield Employment_1.default.findOne({ where: { id: employment } });
-    const processedImage = (0, sharp_1.default)(imagen === null || imagen === void 0 ? void 0 : imagen.buffer);
-    const resizedImageBuffer = yield processedImage.resize(700, 700, { fit: "cover", background: "#FFF" }).toBuffer();
-    fs_1.default.writeFileSync(`uploads/${Filename}`, resizedImageBuffer); //Aqui se crea la imagen
-    let localRoot = path_1.default.join(__dirname, "../..", "uploads");
-    yield (0, ftpDeploy_1.ftpDeploy)("/avatar", "*.png", localRoot);
+    const addPersonBucket = (0, s3_1.putS3newPerson)(imagen, Employee_find.name, person_no, Filename);
     try {
         if (UsuarioExiste) {
             const updatePerson = {
@@ -316,27 +304,24 @@ const addPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 status: 1,
                 avatar_url: Filename,
                 avatar_alias: imagen === null || imagen === void 0 ? void 0 : imagen.originalname,
-                avatar_size: Math.trunc(resizedImageBuffer.byteLength / 1000),
+                avatar_size: imagen === null || imagen === void 0 ? void 0 : imagen.size,
                 avatar_dimensions: "700*700",
                 avatar_suffix: ".png",
-                update_time: (0, fecha_1.formatDate)(now),
+                update_time: (0, fecha_1.formatDate)(new Date()),
                 update_user: userAuth.name,
                 deleted_flag: 0
             };
-            console.log("🚀 ~ file: person.ts ~ line 326 ~ addPerson ~ updatePerson", updatePerson);
-            let person = yield Person_1.default.update(updatePerson, { where: { person_no: person_no } });
-            console.log("🚀 ~ file: person.ts ~ line 329 ~ addPerson ~ person", person);
+            yield Person_1.default.update(updatePerson, { where: { person_no: person_no } });
             const updateEmployee = {
                 employer: employee,
                 person_no,
                 employment,
-                update_time: (0, fecha_1.formatDate)(now),
+                update_time: (0, fecha_1.formatDate)(new Date()),
                 update_user: userAuth.name,
                 deleted_flag: 0
             };
-            let employeeUpdate = yield Employee_1.default.update(updateEmployee, { where: { person_no: person_no } });
-            console.log("🚀 ~ file: person.ts ~ line 340 ~ addPerson ~ employeeUpdate", employeeUpdate);
-            return res.status(200);
+            yield Employee_1.default.update(updateEmployee, { where: { person_no: person_no } });
+            return res.status(200).json({ status: 'ok' });
         }
         else {
             const newPerson = {
@@ -349,7 +334,7 @@ const addPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 employment_name: Employment_find.name,
                 avatar_url: Filename,
                 avatar_alias: imagen === null || imagen === void 0 ? void 0 : imagen.originalname,
-                avatar_size: Math.trunc(resizedImageBuffer.byteLength / 1000),
+                avatar_size: imagen === null || imagen === void 0 ? void 0 : imagen.size,
                 avatar_dimensions: "700*700",
                 avatar_suffix: ".png",
                 create_user: userAuth.name
@@ -384,12 +369,6 @@ const photoPreview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const imagen = req.file;
         console.log("🚀 ~ file: person.ts ~ line 376 ~ photoPreview ~ req.file", req.file);
         const idLuxand = req.body.idLuxand;
-        // const processedImage = sharp(imagen?.buffer);
-        // const resizedImage = processedImage.resize(700, 700, { fit: "cover", background: "#FFF" });
-        // const resizedImageBuffer = await resizedImage.toBuffer();
-        // const filename = `${uuidv4()}.png`;
-        // fs.writeFileSync(`uploads/${filename}`, resizedImageBuffer); //Aqui se envia o crea
-        // let url = path.join(__dirname, "../..", "uploads", filename);
         if (req.file) {
             const docfile_url = `documents/${(_a = req.file) === null || _a === void 0 ? void 0 : _a.filename}`;
             let url = path_1.default.join(__dirname, "../..", "documents/", (_b = req.file) === null || _b === void 0 ? void 0 : _b.filename);
@@ -438,23 +417,26 @@ exports.photoPreview = photoPreview;
 // !                                             Agrega documentos usando el rut del usuario.
 // ************************************************************************************************************************
 const docsFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c, _d, _e;
+    var _c, _d;
     try {
         if (req.file) {
-            const { userAuth, employment_id, person_no, document_name, document_id } = req.body;
+            const file = req.file;
+            const Filename = `${(0, uuid_1.v4)()}${path_1.default.extname(req.file.originalname)}`;
+            const { userAuth, employment_id, person_no, document_name, document_id, empresa } = req.body;
+            (0, s3_1.putS3newPersonDocfile)(file, empresa, person_no, Filename);
             const newDocfile = {
                 employment_id,
                 person_no,
                 document_name,
                 document_id,
-                docfile_url: `documents/${(_c = req.file) === null || _c === void 0 ? void 0 : _c.filename}`,
-                docfile_alias: (_d = req.file) === null || _d === void 0 ? void 0 : _d.originalname,
-                docfile_size: Math.trunc(((_e = req.file) === null || _e === void 0 ? void 0 : _e.size) / 1000),
+                docfile_url: Filename,
+                docfile_alias: (_c = req.file) === null || _c === void 0 ? void 0 : _c.originalname,
+                docfile_size: Math.trunc(((_d = req.file) === null || _d === void 0 ? void 0 : _d.size) / 1000),
                 docfile_suffix: path_1.default.extname(req.file.originalname),
                 create_user: userAuth.name
             };
-            let localRoot = path_1.default.join(__dirname, "../..", "documents");
-            yield (0, ftpDeploy_1.ftpDeploy)("/documents", "*", localRoot);
+            // let localRoot = path.join(__dirname, "../..", "documents");
+            // await ftpDeploy("/documents","*", localRoot)
             const respDocfile = Docfile_1.default.build(newDocfile);
             yield respDocfile.save();
             return res.status(200).json(respDocfile);
@@ -470,26 +452,26 @@ exports.docsFile = docsFile;
 // !                                             Agrega documentos usando el rut del usuario.
 // ************************************************************************************************************************
 const IdcardFront = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f, _g;
+    var _e, _f;
     try {
         if (req.file) {
             const request = require("request");
             const fs = require("fs");
-            const docfile_url = `documents/${(_f = req.file) === null || _f === void 0 ? void 0 : _f.filename}`;
-            let url = path_1.default.join(__dirname, "../..", "documents/", (_g = req.file) === null || _g === void 0 ? void 0 : _g.filename);
+            const docfile_url = `uploads/${(_e = req.file) === null || _e === void 0 ? void 0 : _e.filename}`;
+            let url = path_1.default.join(__dirname, "../..", "uploads/", (_f = req.file) === null || _f === void 0 ? void 0 : _f.filename);
             const options = {
                 method: 'POST',
                 url: "https://api.luxand.cloud/subject/v2",
                 qs: { "name": "", "store": "1" },
-                headers: { 'token': "944628c81d2347cdac8941c17ab8e866" },
+                headers: { 'token': `${process.env.TOKEN_LUXAND}` },
                 formData: { photo: fs.createReadStream(url) }
             };
             request(options, function (error, response, body) {
                 if (error)
                     throw new Error(error);
-                console.log(body);
                 let id = JSON.parse(body);
-                console.log("🚀 ~ file: person.ts ~ line 448 ~ id", id);
+                fs.unlink(url, (err) => { if (err)
+                    throw err; console.log(url); });
                 return res.status(200).json({ id, docfile_url });
             });
         }
@@ -500,27 +482,6 @@ const IdcardFront = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.IdcardFront = IdcardFront;
-// ************************************************************************************************************************
-// !                                             Agrega documentos usando el rut del usuario.
-// ************************************************************************************************************************
-const IdcardBack = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h;
-    try {
-        if (req.file) {
-            const docfile_url = `documents/${(_h = req.file) === null || _h === void 0 ? void 0 : _h.filename}`;
-            const infoIdFront = yield (0, qr_decode_1.readQRCode)(docfile_url);
-            console.log("🚀 ~ file: person.ts ~ line 432 ~ IdcardBack ~ infoIdFront", infoIdFront);
-            //TODO desfracmentar la info que entrega Rut y codigo de serie
-            //TODO https://portal.sidiv.registrocivil.cl/usuarios-portal/pages/DocumentRequestStatus.xhtml?RUN=18143733-2&type=CEDULA&serial=527886183
-            return res.status(200).json(infoIdFront);
-        }
-    }
-    catch (error) {
-        console.log(error);
-        res.status(500).json({ msg: "Contact the administrator" });
-    }
-});
-exports.IdcardBack = IdcardBack;
 /// ************************************************************************************************************************
 // !                                             Elimina una persona con todos sus archivos.
 // ************************************************************************************************************************

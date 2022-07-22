@@ -33,7 +33,7 @@ router.post("/documentsPerson", [validar_jwt_1.validarJWT], person_1.getDocument
 //TODO Obtengo todos los documentos relacionados a una ocupacion.
 router.post("/documents", [validar_jwt_1.validarJWT, (0, express_validator_1.check)("ocupacion", "ocupacion is required").not().isEmpty(), validar_campos_1.validarCampos], person_1.getDocuments);
 //TODO Descargo un documento cargado usando el nombre de este.
-router.get("/downloadDoc/:resource_url", person_1.downloadDoc);
+router.post("/downloadDoc", person_1.downloadDoc);
 //TODO Descargo un documento cargado usando el nombre de este.
 router.get("/downloadFicha/:resource_url", person_1.downloadFicha);
 //TODO Valida un rut si esta utilizado en una empresa.
@@ -43,9 +43,7 @@ router.post("/addPerson", [bstorage.single("file"), validar_jwt_1.validarJWT], p
 //TODO Entrega una vista previa de la foto cargada.
 router.post("/photoPreview", [validar_jwt_1.validarJWT, multer_2.default.single("file")], person_1.photoPreview);
 //TODO Agrega documentos usando el rut del usuario.
-router.post("/docsFile", [multer_2.default.single("file"), validar_jwt_1.validarJWT], person_1.docsFile);
-//TODO Agrega documentos usando el rut del usuario.
-router.post("/IdcardBack", [multer_2.default.single("file"), validar_jwt_1.validarJWT], person_1.IdcardBack);
+router.post("/docsFile", [bstorage.single("file"), validar_jwt_1.validarJWT], person_1.docsFile);
 //TODO Agrega documentos usando el rut del usuario.
 router.post("/IdcardFront", [validar_jwt_1.validarJWT, multer_2.default.single("file")], person_1.IdcardFront);
 //TODO Elimina una persona con todos sus archivos.

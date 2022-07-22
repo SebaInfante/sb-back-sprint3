@@ -18,7 +18,6 @@ const jsonwebtoken_1 = require("../lib/jsonwebtoken");
 const jsonwebtoken_2 = __importDefault(require("jsonwebtoken"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const user_1 = __importDefault(require("../models/user"));
-const { QueryTypes } = require("sequelize");
 // ************************************************************************************************************************
 // !                                                     LOGIN
 // ************************************************************************************************************************
@@ -59,7 +58,7 @@ const validacionToken = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         }
         const secretKey = process.env.SECRETTOPRIVATEKEY;
         const payload = jsonwebtoken_2.default.verify(token, secretKey);
-        const userAuth = yield user_1.default.findByPk(payload.uid); //Aqui tengo el usuario
+        const userAuth = yield user_1.default.findByPk(payload.uid);
         if (!userAuth) {
             return res.status(401).json({ msg: "Token no valido" });
         }
@@ -114,13 +113,14 @@ const recoveryAccount = (req, res) => __awaiter(void 0, void 0, void 0, function
                 subject: "Recovery Password - SmartBoarding",
                 html: `
 					<h1>Sistema de recuperación de contraseñas</h1>
-					<p>Usted solicito una recuperación de contraseña desde el sitio www.smartboarding.cl. <br> Para recuperar su contraseña ingrese al siguiente link y genere una nueva contraseña</p>
+					<p>Usted solicito una recuperación de contraseña desde el sitio ${process.env.SITE_WEB_URL}. <br> Para recuperar su contraseña ingrese al siguiente link y genere una nueva contraseña</p>
 					
-					<small>http://66.94.105.200/recoveryAccount/${token}</small>
+					<small>${process.env.SITE_WEB_URL}/recoveryAccount/${token}</small>
 					</br>
-					<a href="http://66.94.105.200/recoveryAccount/${token}">Recuperar contraseña</a>
+					<a href="${process.env.SITE_WEB_URL}/recoveryAccount/${token}">Recuperar contraseña</a>
 					`, // html body
             });
+            //TODO Ver si es que hay que colocar la url de la api o la dirección 
             transporter.sendMail(mailOption, (error, info) => {
                 if (error) {
                     res.status(500).send(error.message);
