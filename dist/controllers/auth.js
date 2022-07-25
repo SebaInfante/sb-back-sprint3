@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -21,33 +12,33 @@ const user_1 = __importDefault(require("../models/user"));
 // ************************************************************************************************************************
 // !                                                     LOGIN
 // ************************************************************************************************************************
-const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = yield user_1.default.findOne({ where: { email } });
+        const user = await user_1.default.findOne({ where: { email } });
         if (!user) {
             return res.status(400).json({ msg: "Username or password do not match" });
         }
-        const validPassword = yield (0, bcrypt_1.desencriptar)(password, user.password);
+        const validPassword = await (0, bcrypt_1.desencriptar)(password, user.password);
         if (!validPassword) {
             return res.status(400).json({ msg: "Username or password do not match" });
         }
         if (user.deleted_flag === 1) {
             return res.status(400).json({ msg: "Suspended account. Contact the administrator" });
         }
-        const token = yield (0, jsonwebtoken_1.generarJWT)(user.id);
+        const token = await (0, jsonwebtoken_1.generarJWT)(user.id);
         res.json({ user, token });
     }
     catch (error) {
         console.log(error);
         return res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.login = login;
 // ************************************************************************************************************************
 // !                                                     VALIDACIÓN DE TOKEN
 // ************************************************************************************************************************
-const validacionToken = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const validacionToken = async (req, res, next) => {
     try {
         let token = req.header("Authorization");
         if (!token) {
@@ -58,7 +49,7 @@ const validacionToken = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         }
         const secretKey = process.env.SECRETTOPRIVATEKEY;
         const payload = jsonwebtoken_2.default.verify(token, secretKey);
-        const userAuth = yield user_1.default.findByPk(payload.uid);
+        const userAuth = await user_1.default.findByPk(payload.uid);
         if (!userAuth) {
             return res.status(401).json({ msg: "Token no valido" });
         }
@@ -85,20 +76,20 @@ const validacionToken = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         res.status(403).json({ msg: "Token no valido" });
         console.log(e);
     }
-});
+};
 exports.validacionToken = validacionToken;
 // ************************************************************************************************************************
 // !                                                     RECUPERAR CUENTA
 // ************************************************************************************************************************
-const recoveryAccount = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const recoveryAccount = async (req, res) => {
     try {
         const email = req.body.email;
-        const user = yield user_1.default.findOne({ where: { email } });
+        const user = await user_1.default.findOne({ where: { email } });
         if (!user) {
             return res.status(400).json({ mensaje: "Usuario no encontrado" });
         }
         else {
-            const token = yield (0, jsonwebtoken_1.generarJWT)(user.id);
+            const token = await (0, jsonwebtoken_1.generarJWT)(user.id);
             const transporter = nodemailer_1.default.createTransport({
                 host: "smtp.office365.com",
                 port: 587,
@@ -107,7 +98,7 @@ const recoveryAccount = (req, res) => __awaiter(void 0, void 0, void 0, function
                     pass: process.env.PASSW_RECOVERY,
                 },
             });
-            let mailOption = yield transporter.sendMail({
+            let mailOption = await transporter.sendMail({
                 from: '"Equipo Auditar" <aisense_bot@aisense.cl>',
                 to: email,
                 subject: "Recovery Password - SmartBoarding",
@@ -137,12 +128,12 @@ const recoveryAccount = (req, res) => __awaiter(void 0, void 0, void 0, function
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.recoveryAccount = recoveryAccount;
 // ************************************************************************************************************************
 // !                                                     CAMBIAR CONTRASEÑA
 // ************************************************************************************************************************
-const changePassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const changePassword = async (req, res) => {
     try {
         const token = req.params.token;
         const password = req.body.password;
@@ -151,21 +142,21 @@ const changePassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         const secretKey = process.env.SECRETTOPRIVATEKEY;
         const payload = jsonwebtoken_2.default.verify(token, secretKey);
-        const userAuth = yield user_1.default.findByPk(payload.uid);
+        const userAuth = await user_1.default.findByPk(payload.uid);
         if (!userAuth) {
             return res.status(401).json({ msg: "Token no valido" });
         }
         if (userAuth.deleted_flag == 1) {
             return res.status(401).json({ msg: "Token no valido" });
         }
-        const newPassword = yield (0, bcrypt_1.encriptar)(password);
-        yield user_1.default.update({ password: newPassword }, { where: { id: userAuth.id } });
+        const newPassword = await (0, bcrypt_1.encriptar)(password);
+        await user_1.default.update({ password: newPassword }, { where: { id: userAuth.id } });
         return res.status(200).json({ msg: "Cambio de contraseña exitoso" });
     }
     catch (error) {
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.changePassword = changePassword;
 //# sourceMappingURL=auth.js.map

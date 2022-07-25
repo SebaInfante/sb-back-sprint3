@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -32,7 +23,7 @@ const now = new Date();
 // ************************************************************************************************************************
 // !                                             Obtengo primero 500 registros de las personas
 // ************************************************************************************************************************
-const getPersons = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getPersons = async (req, res) => {
     try {
         const userAuth = req.body.userAuth;
         const name = req.body.name || "";
@@ -58,7 +49,7 @@ const getPersons = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         else {
             !contratista ? (employee = "") : (employee = contratista);
         }
-        const Persons = yield Person_1.default.findAll({
+        const Persons = await Person_1.default.findAll({
             attributes: [
                 'id',
                 'email',
@@ -85,7 +76,7 @@ const getPersons = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             ],
             limit: 500
         });
-        yield Persons.map((Person) => {
+        await Persons.map((Person) => {
             Person.dataValues.URL = (0, s3_1.getUrlS3)(Person.dataValues.empresa, Person.dataValues.avatar, Person.dataValues.id_card);
         });
         return res.json(Persons);
@@ -94,19 +85,19 @@ const getPersons = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         console.log(error);
         return res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.getPersons = getPersons;
 // ************************************************************************************************************************
 // !                                             Obtengo las ocupaciones mediante el id.
 // ************************************************************************************************************************
-const getEmployment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getEmployment = async (req, res) => {
     try {
         let employment;
         const id = req.params.id;
         const { userAuth } = req.body;
         (userAuth.role === "USC")
-            ? employment = yield Employment_1.default.findAll({ where: { [Op.and]: [{ employee: userAuth.id }, { deleted_flag: 0 }] } })
-            : employment = yield Employment_1.default.findAll({ where: { [Op.and]: [{ employee: id }, { deleted_flag: 0 }] } });
+            ? employment = await Employment_1.default.findAll({ where: { [Op.and]: [{ employee: userAuth.id }, { deleted_flag: 0 }] } })
+            : employment = await Employment_1.default.findAll({ where: { [Op.and]: [{ employee: id }, { deleted_flag: 0 }] } });
         if (employment.length == 0) {
             employment = [{ id: 1, employment: "No seleccionado" }];
         }
@@ -116,19 +107,19 @@ const getEmployment = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         console.log(error);
         return res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.getEmployment = getEmployment;
 // ************************************************************************************************************************
 // !                                             Actualizo los datos de las personas.
 // ************************************************************************************************************************
-const updateDatos = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const updateDatos = async (req, res) => {
     try {
         const person_no = req.params.id; //TODO aqui tiene que llegar el person_no (rut)
         const { name, email, ocupacion, userAuth } = req.body;
         const Person_data = {
             name,
             email,
-            employment_name: yield Employment_1.default.findOne({ where: { id: ocupacion }, attributes: ['employment'] }),
+            employment_name: await Employment_1.default.findOne({ where: { id: ocupacion }, attributes: ['employment'] }),
             update_time: (0, fecha_1.formatDate)(now),
             update_user: userAuth.name
         };
@@ -137,25 +128,25 @@ const updateDatos = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             update_time: (0, fecha_1.formatDate)(now),
             update_user: userAuth.name
         };
-        yield Person_1.default.update(Person_data, { where: { person_no } });
-        yield Employee_1.default.update(Employee_data, { where: { person_no } });
+        await Person_1.default.update(Person_data, { where: { person_no } });
+        await Employee_1.default.update(Employee_data, { where: { person_no } });
         return res.status(200).json({ msg: "Actualización realizada" });
     }
     catch (error) {
         console.log(error);
         return res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.updateDatos = updateDatos;
 // ************************************************************************************************************************
 // !                                             Genera y descarga la ficha de la persona.
 // ************************************************************************************************************************
-const getFichaPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getFichaPerson = async (req, res) => {
     try {
         const rut = req.params.rut;
         const Filename = `${(0, uuid_1.v4)()}.pdf`;
-        const Persons = yield Person_1.default.findOne({ where: { [Op.and]: [{ person_no: { [Op.substring]: rut } }, { deleted_flag: 0 }] } });
-        yield (0, pdfkit_1.generarPDF)(Persons, Filename);
+        const Persons = await Person_1.default.findOne({ where: { [Op.and]: [{ person_no: { [Op.substring]: rut } }, { deleted_flag: 0 }] } });
+        await (0, pdfkit_1.generarPDF)(Persons, Filename);
         setTimeout(() => {
             return res.status(200).json(Filename);
         }, 3000);
@@ -164,34 +155,34 @@ const getFichaPerson = (req, res) => __awaiter(void 0, void 0, void 0, function*
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.getFichaPerson = getFichaPerson;
 // ************************************************************************************************************************
 // !                                             Obtengo los datos de una persona con su rut.
 // ************************************************************************************************************************
-const getPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getPerson = async (req, res) => {
     try {
         const rut = req.params.rut;
-        const Person_find = yield Person_1.default.findOne({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
+        const Person_find = await Person_1.default.findOne({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
         Person_find.dataValues.URL = (0, s3_1.getUrlS3)(Person_find.dataValues.employee_name, Person_find.dataValues.avatar_url, Person_find.dataValues.person_no);
-        const Employee_find = yield Employee_1.default.findOne({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
-        const Docfile_find = yield Docfile_1.default.findAll({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
+        const Employee_find = await Employee_1.default.findOne({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
+        const Docfile_find = await Docfile_1.default.findAll({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
         return res.json({ Person_find, Docfile_find, Employee_find });
     }
     catch (error) {
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.getPerson = getPerson;
 // ************************************************************************************************************************
 // !                                             Obtengo todos las ocupaciones que existen siendo admin.
 // ************************************************************************************************************************
-const getAllEmployment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getAllEmployment = async (req, res) => {
     try {
         const userAuth = req.body.userAuth;
         if (userAuth.role === "ADM") {
-            const employment = yield Employment_1.default.findAll({ where: { deleted_flag: 0 } });
+            const employment = await Employment_1.default.findAll({ where: { deleted_flag: 0 } });
             return res.json(employment);
         }
     }
@@ -199,42 +190,42 @@ const getAllEmployment = (req, res) => __awaiter(void 0, void 0, void 0, functio
         console.log(error);
         res.status(403).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.getAllEmployment = getAllEmployment;
 // ************************************************************************************************************************
 // !                                             Obtengo todos los documentos relacionados a una persona.
 // ************************************************************************************************************************
-const getDocumentsPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getDocumentsPerson = async (req, res) => {
     try {
         const { idDoc, id_person } = req.body;
-        const Docfile_find = yield Docfile_1.default.findAll({ where: { [Op.and]: [{ person_no: id_person }, { document_id: idDoc }, { deleted_flag: 0 }] } });
+        const Docfile_find = await Docfile_1.default.findAll({ where: { [Op.and]: [{ person_no: id_person }, { document_id: idDoc }, { deleted_flag: 0 }] } });
         return res.json(Docfile_find);
     }
     catch (error) {
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.getDocumentsPerson = getDocumentsPerson;
 // ************************************************************************************************************************
 // !                                             Obtengo todos los documentos relacionados a una ocupacion.
 // ************************************************************************************************************************
-const getDocuments = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getDocuments = async (req, res) => {
     try {
         const id = req.body.ocupacion || "";
-        const documents = yield Document_1.default.findAll({ where: { [Op.and]: [{ employment_id: id }, { deleted_flag: 0 }] } });
+        const documents = await Document_1.default.findAll({ where: { [Op.and]: [{ employment_id: id }, { deleted_flag: 0 }] } });
         return res.json(documents);
     }
     catch (error) {
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.getDocuments = getDocuments;
 // ************************************************************************************************************************
 // !                                             Descargo un documento cargado usando el nombre de este.
 // ************************************************************************************************************************
-const downloadDoc = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const downloadDoc = async (req, res) => {
     console.log(req.body);
     try {
         const url = (0, s3_1.getUrlS3Docfile)(req.body.group_name, req.body.name, req.body.person_no);
@@ -244,12 +235,12 @@ const downloadDoc = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.downloadDoc = downloadDoc;
 // ************************************************************************************************************************
 // !                                             Descargo un documento cargado usando el nombre de este.
 // ************************************************************************************************************************
-const downloadFicha = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const downloadFicha = async (req, res) => {
     try {
         let filename = req.params.resource_url;
         let url = path_1.default.join(__dirname, "../..", "uploads/fichas", filename);
@@ -259,15 +250,15 @@ const downloadFicha = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.downloadFicha = downloadFicha;
 // ************************************************************************************************************************
 // !                                             Valida un rut si esta utilizado en una empresa.
 // ************************************************************************************************************************
-const validarRut = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const validarRut = async (req, res) => {
     try {
         const rut = req.body.rut;
-        const Employee_find = yield Employee_1.default.findAll({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
+        const Employee_find = await Employee_1.default.findAll({ where: { [Op.and]: [{ person_no: rut }, { deleted_flag: 0 }] } });
         if (Employee_find.length === 0) {
             return res.status(200).json(true);
         }
@@ -279,18 +270,18 @@ const validarRut = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.validarRut = validarRut;
 // ************************************************************************************************************************
 // !                                             Agrega una nueva persona a los registros (data y avatar).
 // ************************************************************************************************************************
-const addPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const addPerson = async (req, res) => {
     const { person_no, name, gender, email, employee, employment, qr_url, userAuth } = req.body;
     const imagen = req.file;
     const Filename = `${(0, uuid_1.v4)()}.png`;
-    const UsuarioExiste = yield Person_1.default.findOne({ where: { person_no } });
-    const Employee_find = yield Company_1.default.findOne({ where: { id: employee } });
-    const Employment_find = yield Employment_1.default.findOne({ where: { id: employment } });
+    const UsuarioExiste = await Person_1.default.findOne({ where: { person_no } });
+    const Employee_find = await Company_1.default.findOne({ where: { id: employee } });
+    const Employment_find = await Employment_1.default.findOne({ where: { id: employment } });
     const addPersonBucket = (0, s3_1.putS3newPerson)(imagen, Employee_find.name, person_no, Filename);
     try {
         if (UsuarioExiste) {
@@ -303,15 +294,15 @@ const addPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 employment_name: Employment_find.name,
                 status: 1,
                 avatar_url: Filename,
-                avatar_alias: imagen === null || imagen === void 0 ? void 0 : imagen.originalname,
-                avatar_size: imagen === null || imagen === void 0 ? void 0 : imagen.size,
+                avatar_alias: imagen?.originalname,
+                avatar_size: imagen?.size,
                 avatar_dimensions: "700*700",
                 avatar_suffix: ".png",
                 update_time: (0, fecha_1.formatDate)(new Date()),
                 update_user: userAuth.name,
                 deleted_flag: 0
             };
-            yield Person_1.default.update(updatePerson, { where: { person_no: person_no } });
+            await Person_1.default.update(updatePerson, { where: { person_no: person_no } });
             const updateEmployee = {
                 employer: employee,
                 person_no,
@@ -320,7 +311,7 @@ const addPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 update_user: userAuth.name,
                 deleted_flag: 0
             };
-            yield Employee_1.default.update(updateEmployee, { where: { person_no: person_no } });
+            await Employee_1.default.update(updateEmployee, { where: { person_no: person_no } });
             return res.status(200).json({ status: 'ok' });
         }
         else {
@@ -333,14 +324,14 @@ const addPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 employee_name: Employee_find.name,
                 employment_name: Employment_find.name,
                 avatar_url: Filename,
-                avatar_alias: imagen === null || imagen === void 0 ? void 0 : imagen.originalname,
-                avatar_size: imagen === null || imagen === void 0 ? void 0 : imagen.size,
+                avatar_alias: imagen?.originalname,
+                avatar_size: imagen?.size,
                 avatar_dimensions: "700*700",
                 avatar_suffix: ".png",
                 create_user: userAuth.name
             };
             const respPerson = Person_1.default.build(newPerson);
-            yield respPerson.save();
+            await respPerson.save();
             const newEmployee = {
                 employer: employee,
                 person_no,
@@ -348,7 +339,7 @@ const addPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 create_user: userAuth.name
             };
             const respEmployee = Employee_1.default.build(newEmployee);
-            yield respEmployee.save();
+            await respEmployee.save();
             return res.status(200).json(respEmployee);
         }
     }
@@ -356,13 +347,12 @@ const addPerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.addPerson = addPerson;
 // ************************************************************************************************************************
 // !                                             Entrega una vista previa de la foto cargada.
 // ************************************************************************************************************************
-const photoPreview = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+const photoPreview = async (req, res) => {
     try {
         const request = require("request");
         const fs = require("fs");
@@ -370,15 +360,14 @@ const photoPreview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         console.log("🚀 ~ file: person.ts ~ line 376 ~ photoPreview ~ req.file", req.file);
         const idLuxand = req.body.idLuxand;
         if (req.file) {
-            const docfile_url = `documents/${(_a = req.file) === null || _a === void 0 ? void 0 : _a.filename}`;
-            let url = path_1.default.join(__dirname, "../..", "documents/", (_b = req.file) === null || _b === void 0 ? void 0 : _b.filename);
+            const docfile_url = `documents/${req.file?.filename}`;
+            let url = path_1.default.join(__dirname, "../..", "uploads/", req.file?.filename);
             var options = {
                 method: 'POST',
                 url: `https://api.luxand.cloud/photo/verify/${idLuxand}`,
                 qs: {},
                 headers: { 'token': "944628c81d2347cdac8941c17ab8e866" },
                 formData: { photo: fs.createReadStream(url)
-                    // or use URL // photo: 'https://dashboard.luxand.cloud/img/brad.jpg' 
                 }
             };
             const resource = request(options, function (error, response, body) {
@@ -411,13 +400,12 @@ const photoPreview = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.photoPreview = photoPreview;
 // ************************************************************************************************************************
 // !                                             Agrega documentos usando el rut del usuario.
 // ************************************************************************************************************************
-const docsFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c, _d;
+const docsFile = async (req, res) => {
     try {
         if (req.file) {
             const file = req.file;
@@ -430,15 +418,13 @@ const docsFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 document_name,
                 document_id,
                 docfile_url: Filename,
-                docfile_alias: (_c = req.file) === null || _c === void 0 ? void 0 : _c.originalname,
-                docfile_size: Math.trunc(((_d = req.file) === null || _d === void 0 ? void 0 : _d.size) / 1000),
+                docfile_alias: req.file?.originalname,
+                docfile_size: Math.trunc(req.file?.size / 1000),
                 docfile_suffix: path_1.default.extname(req.file.originalname),
                 create_user: userAuth.name
             };
-            // let localRoot = path.join(__dirname, "../..", "documents");
-            // await ftpDeploy("/documents","*", localRoot)
             const respDocfile = Docfile_1.default.build(newDocfile);
-            yield respDocfile.save();
+            await respDocfile.save();
             return res.status(200).json(respDocfile);
         }
     }
@@ -446,19 +432,18 @@ const docsFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.docsFile = docsFile;
 // ************************************************************************************************************************
 // !                                             Agrega documentos usando el rut del usuario.
 // ************************************************************************************************************************
-const IdcardFront = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f;
+const IdcardFront = async (req, res) => {
     try {
         if (req.file) {
             const request = require("request");
             const fs = require("fs");
-            const docfile_url = `uploads/${(_e = req.file) === null || _e === void 0 ? void 0 : _e.filename}`;
-            let url = path_1.default.join(__dirname, "../..", "uploads/", (_f = req.file) === null || _f === void 0 ? void 0 : _f.filename);
+            const docfile_url = `uploads/${req.file?.filename}`;
+            let url = path_1.default.join(__dirname, "../..", "uploads", req.file?.filename);
             const options = {
                 method: 'POST',
                 url: "https://api.luxand.cloud/subject/v2",
@@ -480,12 +465,12 @@ const IdcardFront = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.IdcardFront = IdcardFront;
 /// ************************************************************************************************************************
 // !                                             Elimina una persona con todos sus archivos.
 // ************************************************************************************************************************
-const deletePerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const deletePerson = async (req, res) => {
     try {
         const person_no = req.params.id;
         console.log("🚀 ~ file: person.ts ~ line 532 ~ deletePerson ~ person_no", person_no);
@@ -495,21 +480,21 @@ const deletePerson = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             update_user: userAuth.name,
             deleted_flag: 1
         };
-        yield Person_1.default.update(data, { where: { person_no } });
-        yield Employee_1.default.update(data, { where: { person_no } });
-        yield Docfile_1.default.update(data, { where: { person_no } });
+        await Person_1.default.update(data, { where: { person_no } });
+        await Employee_1.default.update(data, { where: { person_no } });
+        await Docfile_1.default.update(data, { where: { person_no } });
         return res.status(200).json({ msg: "Usuario Eliminado correctamente" });
     }
     catch (error) {
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.deletePerson = deletePerson;
 /// ************************************************************************************************************************
 // !                                             Elimina un solo archivo usando su id.
 // *************************************************************************************************************************
-const deleteFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const deleteFile = async (req, res) => {
     try {
         const id = req.params.id;
         const userAuth = req.body.userAuth;
@@ -518,24 +503,24 @@ const deleteFile = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             update_user: userAuth.name,
             deleted_flag: 1
         };
-        yield Docfile_1.default.update(data, { where: { id } });
+        await Docfile_1.default.update(data, { where: { id } });
         return res.status(200).json({ msg: "Archivo Eliminado correctamente" });
     }
     catch (error) {
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.deleteFile = deleteFile;
 /// ************************************************************************************************************************
 // !                                             Envia un email para soltar un empleado.
 // *************************************************************************************************************************
-const sendEmailDeletePerson = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const sendEmailDeletePerson = async (req, res) => {
     try {
         const person_no = req.body.rut;
-        const Person_find = yield Person_1.default.findOne({ where: { [Op.and]: [{ person_no }, { deleted_flag: 0 }] } });
-        const Employer_find = yield user_1.default.findOne({ where: { name: Person_find.employee_name } });
-        const Mandante_find = yield user_1.default.findOne({ where: { id: Employer_find.employee } });
+        const Person_find = await Person_1.default.findOne({ where: { [Op.and]: [{ person_no }, { deleted_flag: 0 }] } });
+        const Employer_find = await user_1.default.findOne({ where: { name: Person_find.employee_name } });
+        const Mandante_find = await user_1.default.findOne({ where: { id: Employer_find.employee } });
         const email = Mandante_find.email;
         const nombre = Mandante_find.name;
         const empresaNombre = Employer_find.name;
@@ -550,7 +535,7 @@ const sendEmailDeletePerson = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 pass: process.env.PASSW_RECOVERY,
             },
         });
-        const mailOption = yield transporter.sendMail({
+        const mailOption = await transporter.sendMail({
             from: '"Equipo Auditar" <aisense_bot@aisense.cl>',
             to: email,
             subject: "Solicitud de eliminación de usuario - SmartBoarding",
@@ -576,12 +561,12 @@ const sendEmailDeletePerson = (req, res) => __awaiter(void 0, void 0, void 0, fu
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.sendEmailDeletePerson = sendEmailDeletePerson;
 /// ************************************************************************************************************************
 // !                                             Genera un reporte excel.
 // *************************************************************************************************************************
-const downloadReportRecords = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const downloadReportRecords = async (req, res) => {
     try {
         const userAuth = req.body.userAuth;
         const name = req.body.name || "";
@@ -607,7 +592,7 @@ const downloadReportRecords = (req, res) => __awaiter(void 0, void 0, void 0, fu
         else {
             !contratista ? (employee = "") : (employee = contratista);
         }
-        const Persons = yield Person_1.default.findAll({
+        const Persons = await Person_1.default.findAll({
             attributes: [
                 'id',
                 'email',
@@ -651,20 +636,20 @@ const downloadReportRecords = (req, res) => __awaiter(void 0, void 0, void 0, fu
         ws.cell(1, 7).string("Empresa").style(style);
         ws.cell(1, 8).string("Ocupación").style(style);
         ws.cell(1, 9).string("Creación").style(style);
-        yield (Persons === null || Persons === void 0 ? void 0 : Persons.forEach((row, index) => {
-            ws.cell(index + 2, 1).string((row === null || row === void 0 ? void 0 : row.person_no) || "");
-            ws.cell(index + 2, 2).string((row === null || row === void 0 ? void 0 : row.person_name) || "");
-            ws.cell(index + 2, 3).string((row === null || row === void 0 ? void 0 : row.gender) || "");
-            ws.cell(index + 2, 4).string((row === null || row === void 0 ? void 0 : row.email) || "");
-            ws.cell(index + 2, 5).string((row === null || row === void 0 ? void 0 : row.avatar_url) || "");
-            ws.cell(index + 2, 6).string((row === null || row === void 0 ? void 0 : row.status) || "");
-            ws.cell(index + 2, 7).string((row === null || row === void 0 ? void 0 : row.employee_name) || "");
-            ws.cell(index + 2, 8).string((row === null || row === void 0 ? void 0 : row.employment_name) || "");
-            ws.cell(index + 2, 9).date(new Date(row === null || row === void 0 ? void 0 : row.create_time));
-        }));
+        await Persons?.forEach((row, index) => {
+            ws.cell(index + 2, 1).string(row?.person_no || "");
+            ws.cell(index + 2, 2).string(row?.person_name || "");
+            ws.cell(index + 2, 3).string(row?.gender || "");
+            ws.cell(index + 2, 4).string(row?.email || "");
+            ws.cell(index + 2, 5).string(row?.avatar_url || "");
+            ws.cell(index + 2, 6).string(row?.status || "");
+            ws.cell(index + 2, 7).string(row?.employee_name || "");
+            ws.cell(index + 2, 8).string(row?.employment_name || "");
+            ws.cell(index + 2, 9).date(new Date(row?.create_time));
+        });
         const Filename = `${(0, uuid_1.v4)()}.xlsx`;
         const pathExcel = path_1.default.join(__dirname, "../..", "excel", Filename);
-        yield wb.write(pathExcel, function (err, stats) {
+        await wb.write(pathExcel, function (err, stats) {
             if (err) {
                 console.log(err);
             }
@@ -685,12 +670,12 @@ const downloadReportRecords = (req, res) => __awaiter(void 0, void 0, void 0, fu
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.downloadReportRecords = downloadReportRecords;
 /// ************************************************************************************************************************
 // !                                             Elimina un solo archivo usando su id.
 // *************************************************************************************************************************
-const downReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const downReport = async (req, res) => {
     try {
         const filename = req.params.resource_url;
         const url = path_1.default.join(__dirname, "../..", "excel", filename);
@@ -700,7 +685,7 @@ const downReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         console.log(error);
         res.status(500).json({ msg: "Contact the administrator" });
     }
-});
+};
 exports.downReport = downReport;
 //*********************
 //# sourceMappingURL=person.js.map

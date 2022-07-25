@@ -387,7 +387,7 @@ export const photoPreview = async (req: Request, res: Response) => {
 		if (req.file) {
 
 			const docfile_url= `documents/${req.file?.filename}`
-			let url = path.join(__dirname, "../..", "documents/",req.file?.filename);
+			let url = path.join(__dirname, "../..", "uploads/",req.file?.filename);
 	
 			var options = {
 					method: 'POST', 
@@ -395,7 +395,7 @@ export const photoPreview = async (req: Request, res: Response) => {
 					qs: {}, 
 					headers: { 'token': "944628c81d2347cdac8941c17ab8e866" }, 
 					formData: { photo: fs.createReadStream(url) 
-				  // or use URL // photo: 'https://dashboard.luxand.cloud/img/brad.jpg' 
+
 			} }; 
 			const resource = request(options,function (error: any, response: any, body: any) {
 				if (error) throw new Error(error);
@@ -456,12 +456,8 @@ export const docsFile = async (req: Request, res: Response) => {
 				create_user: userAuth.name
 			}
 
-			// let localRoot = path.join(__dirname, "../..", "documents");
-			// await ftpDeploy("/documents","*", localRoot)
-
 			const respDocfile = Docfile.build(newDocfile);
 			await respDocfile.save()
-
 			return res.status(200).json(respDocfile);
 		}
 	} catch (error) {
@@ -480,7 +476,7 @@ export const IdcardFront = async (req: Request, res: Response) => {
 			const fs = require("fs");
 
 			const docfile_url= `uploads/${req.file?.filename}`
-			let url = path.join(__dirname, "../..", "uploads/",req.file?.filename);
+			let url = path.join(__dirname, "../..", "uploads",req.file?.filename);
 
 			const options = { 
 				method: 'POST', 

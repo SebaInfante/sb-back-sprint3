@@ -183,10 +183,6 @@ export const addTurnoEfectivo = async (req: Request, res: Response) => {
 			domingo,
             create_user: userAuth.name
         }
-        console.log("🚀 ~ file: admin.ts ~ line 179 ~ addTurnoEfectivo ~ newShift", newShift)
-
-
-		// res.json(true);
 
         const shift_config = Shift_Config.build(newShift);
 		await shift_config.save(); 

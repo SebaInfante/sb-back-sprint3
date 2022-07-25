@@ -70,14 +70,29 @@ export const getS3ListPerson = (group_name:string = '', name:string) =>{
 
 
 
+export const getUrlS3PassRecord =  (url:string) =>{
+    const newUrl = url.replaceAll("/","")
+    const params = {   
+            Key: `${process.env.OBJ_STG_FOLDER}/registros/${newUrl}`,
+            Bucket,
+            Expires:60*15
+        }
+    return  s3.getSignedUrl("getObject", params)
+}
+
+
+
+
 export const getUrlS3 =  (group_name:string , name:string, person_no:string) =>{
     const params = {   
             Key: `${process.env.OBJ_STG_FOLDER}/avatar/${group_name}/${person_no}/${name}`,
             Bucket,
-            Expires:60*2
+            Expires:60*15
         }
     return  s3.getSignedUrl("getObject", params)
 }
+
+
 
 export const getUrlS3Docfile =  (group_name:string , name:string, person_no:string) =>{
     const params = {   

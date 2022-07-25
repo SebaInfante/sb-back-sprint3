@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.putS3newPersonDocfile = exports.putS3newPerson = exports.getUrlS3Docfile = exports.getUrlS3 = exports.getS3ListPerson = exports.getS3ListRegistros = exports.s3 = void 0;
+exports.putS3newPersonDocfile = exports.putS3newPerson = exports.getUrlS3Docfile = exports.getUrlS3 = exports.getUrlS3PassRecord = exports.getS3ListPerson = exports.getS3ListRegistros = exports.s3 = void 0;
 const aws_sdk_1 = __importDefault(require("aws-sdk"));
 const Bucket = `${process.env.OBJ_STG_BUCKET}`;
 exports.s3 = new aws_sdk_1.default.S3({
@@ -64,11 +64,21 @@ const getS3ListPerson = (group_name = '', name) => {
     return URL;
 };
 exports.getS3ListPerson = getS3ListPerson;
+const getUrlS3PassRecord = (url) => {
+    const newUrl = url.replaceAll("/", "");
+    const params = {
+        Key: `${process.env.OBJ_STG_FOLDER}/registros/${newUrl}`,
+        Bucket,
+        Expires: 60 * 15
+    };
+    return exports.s3.getSignedUrl("getObject", params);
+};
+exports.getUrlS3PassRecord = getUrlS3PassRecord;
 const getUrlS3 = (group_name, name, person_no) => {
     const params = {
         Key: `${process.env.OBJ_STG_FOLDER}/avatar/${group_name}/${person_no}/${name}`,
         Bucket,
-        Expires: 60 * 2
+        Expires: 60 * 15
     };
     return exports.s3.getSignedUrl("getObject", params);
 };
@@ -83,7 +93,7 @@ const getUrlS3Docfile = (group_name, name, person_no) => {
 };
 exports.getUrlS3Docfile = getUrlS3Docfile;
 const putS3newPerson = (imagen, group_name, person_no, Filename) => {
-    const Body = Buffer.from(imagen === null || imagen === void 0 ? void 0 : imagen.buffer);
+    const Body = Buffer.from(imagen?.buffer);
     const Key = `${process.env.OBJ_STG_FOLDER}/avatar/${group_name}/${person_no}/${Filename}`;
     exports.s3.putObject({ Body, Bucket, Key, ContentType: imagen.mimetype, }, function (err, data) {
         if (err) {
@@ -96,7 +106,7 @@ const putS3newPerson = (imagen, group_name, person_no, Filename) => {
 };
 exports.putS3newPerson = putS3newPerson;
 const putS3newPersonDocfile = (file, group_name, person_no, Filename) => {
-    const Body = Buffer.from(file === null || file === void 0 ? void 0 : file.buffer);
+    const Body = Buffer.from(file?.buffer);
     const Key = `${process.env.OBJ_STG_FOLDER}/documentos/${group_name}/${person_no}/${Filename}`;
     exports.s3.putObject({ Body, Bucket, Key, ContentType: file.mimetype }, function (err, data) {
         if (err) {

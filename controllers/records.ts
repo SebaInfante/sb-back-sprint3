@@ -7,6 +7,7 @@ const xl = require("excel4node");
 import path from "path";
 import { v4 as uuidv4 } from 'uuid';
 import Person from "../models/Person";
+import { getUrlS3PassRecord } from "../lib/s3";
 const now = new Date();
 const { Op } = require("sequelize");
 
@@ -61,7 +62,13 @@ export const recordsToDay = async (req: Request, res: Response) => {
 				limit: 500
 			}
 		);
-		return res.status(200).json(Pass_Records);
+		Pass_Records.map((pass:any)=>{
+			pass.dataValues.pass_img_url = getUrlS3PassRecord(pass.dataValues.pass_img_url)			
+		})
+		setTimeout(() => {
+			return res.status(200).json(Pass_Records);
+		}, 3000);
+
 	} catch (error) {
 		console.log(error);
 		return res.status(500).json({ msg: "Contact the administrator" });
