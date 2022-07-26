@@ -75,8 +75,9 @@ const getUrlS3PassRecord = (url) => {
 };
 exports.getUrlS3PassRecord = getUrlS3PassRecord;
 const getUrlS3 = (group_name, name, person_no) => {
+    const empresa = group_name.charAt(0).toUpperCase() + group_name.slice(1);
     const params = {
-        Key: `${process.env.OBJ_STG_FOLDER}/avatar/${group_name}/${person_no}/${name}`,
+        Key: `${process.env.OBJ_STG_FOLDER}/avatar/${empresa}/${person_no}/${name}`,
         Bucket,
         Expires: 60 * 15
     };

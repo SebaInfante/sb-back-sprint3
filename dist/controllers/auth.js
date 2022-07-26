@@ -106,9 +106,10 @@ const recoveryAccount = async (req, res) => {
 					<h1>Sistema de recuperación de contraseñas</h1>
 					<p>Usted solicito una recuperación de contraseña desde el sitio ${process.env.SITE_WEB_URL}. <br> Para recuperar su contraseña ingrese al siguiente link y genere una nueva contraseña</p>
 					
-					<small>${process.env.SITE_WEB_URL}/recoveryAccount/${token}</small>
+					<small>${process.env.SITE_WEB_URL}/#/recovery-account/${token}</small>
 					</br>
-					<a href="${process.env.SITE_WEB_URL}/recoveryAccount/${token}">Recuperar contraseña</a>
+					<a href="${process.env.SITE_WEB_URL}/#/recovery-account/${token}">Recuperar contraseña</a>
+
 					`, // html body
             });
             //TODO Ver si es que hay que colocar la url de la api o la dirección 

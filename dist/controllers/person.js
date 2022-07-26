@@ -276,6 +276,7 @@ exports.validarRut = validarRut;
 // !                                             Agrega una nueva persona a los registros (data y avatar).
 // ************************************************************************************************************************
 const addPerson = async (req, res) => {
+    var request = require('request');
     const { person_no, name, gender, email, employee, employment, qr_url, userAuth } = req.body;
     const imagen = req.file;
     const Filename = `${(0, uuid_1.v4)()}.png`;
@@ -283,6 +284,57 @@ const addPerson = async (req, res) => {
     const Employee_find = await Company_1.default.findOne({ where: { id: employee } });
     const Employment_find = await Employment_1.default.findOne({ where: { id: employment } });
     const addPersonBucket = (0, s3_1.putS3newPerson)(imagen, Employee_find.name, person_no, Filename);
+    //  TODO Modularizar el código de abajo
+    let options;
+    options = {
+        'method': 'POST',
+        'url': '154.53.37.187:8190/api/person/add',
+        'headers': {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        form: {
+            'deviceKey': 'F4970C5C3419ACBC',
+            'secret': 'tdx',
+            'id': person_no,
+            'name': name,
+            'idcardNum': qr_url,
+            'expireTime': '',
+            'blacklist': '',
+            'vaccination': '',
+            'vaccinationTime': '',
+            'remark': 'El Big Boss'
+        }
+    };
+    request(options, function (error, response) {
+        if (error)
+            throw new Error(error);
+        console.log(response.body);
+    });
+    options = {
+        'method': 'POST',
+        'url': '154.53.37.187:8190/api/person/add',
+        'headers': {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        form: {
+            'deviceKey': 'EF38DD40511C2EB2',
+            'secret': 'tdx',
+            'id': person_no,
+            'name': name,
+            'idcardNum': qr_url,
+            'expireTime': '',
+            'blacklist': '',
+            'vaccination': '',
+            'vaccinationTime': '',
+            'remark': 'El Big Boss'
+        }
+    };
+    request(options, function (error, response) {
+        if (error)
+            throw new Error(error);
+        console.log(response.body);
+    });
+    // 
     try {
         if (UsuarioExiste) {
             const updatePerson = {

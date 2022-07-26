@@ -7,7 +7,7 @@ const xl = require("excel4node");
 import path from "path";
 import { v4 as uuidv4 } from 'uuid';
 import Person from "../models/Person";
-import { getUrlS3PassRecord } from "../lib/s3";
+import { getUrlS3, getUrlS3PassRecord } from "../lib/s3";
 const now = new Date();
 const { Op } = require("sequelize");
 
@@ -18,7 +18,6 @@ const { Op } = require("sequelize");
 
 export const recordsToDay = async (req: Request, res: Response) => {
 	try {
-		//TODO : Hay que usar la ocupación ? const ocupacion = req.body.ocupacion || "";
 		const userAuth = req.body.userAuth;
 		const name = req.body.name || "";
 		const rut = req.body.rut || "";
@@ -63,7 +62,14 @@ export const recordsToDay = async (req: Request, res: Response) => {
 			}
 		);
 		Pass_Records.map((pass:any)=>{
-			pass.dataValues.pass_img_url = getUrlS3PassRecord(pass.dataValues.pass_img_url)			
+			const urls = pass.dataValues.person_resource_url
+
+			if(urls){
+				pass.dataValues.resource_url = getUrlS3(pass.dataValues.group_name,  urls.split('/')[8], pass.dataValues.person_no)	
+			}
+
+			pass.dataValues.pass_img_url = getUrlS3PassRecord(pass.dataValues.pass_img_url)
+
 		})
 		setTimeout(() => {
 			return res.status(200).json(Pass_Records);

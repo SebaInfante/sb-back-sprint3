@@ -18,7 +18,6 @@ const { Op } = require("sequelize");
 // ************************************************************************************************************************
 const recordsToDay = async (req, res) => {
     try {
-        //TODO : Hay que usar la ocupación ? const ocupacion = req.body.ocupacion || "";
         const userAuth = req.body.userAuth;
         const name = req.body.name || "";
         const rut = req.body.rut || "";
@@ -64,6 +63,10 @@ const recordsToDay = async (req, res) => {
             limit: 500
         });
         Pass_Records.map((pass) => {
+            const urls = pass.dataValues.person_resource_url;
+            if (urls) {
+                pass.dataValues.resource_url = (0, s3_1.getUrlS3)(pass.dataValues.group_name, urls.split('/')[8], pass.dataValues.person_no);
+            }
             pass.dataValues.pass_img_url = (0, s3_1.getUrlS3PassRecord)(pass.dataValues.pass_img_url);
         });
         setTimeout(() => {
