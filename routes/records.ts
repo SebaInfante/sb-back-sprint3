@@ -17,4 +17,5 @@ router.get('/downreport/:resource_url', downReport);
 
 router.put('/editarPasada/:id', [validarJWT, esAdminRole], updateRecord);
 router.delete("/deleteRecord/:id", [validarJWT, esAdminRole], deleteRecord);
+
 export default router

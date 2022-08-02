@@ -2,6 +2,7 @@ import { Response, Request } from "express";
 import { encriptar } from "../lib/bcrypt";
 import { formatDate } from "../utils/fecha";
 import User from "../models/user";
+import Company from "../models/Company";
 
 const fecha = new Date();
 
@@ -12,7 +13,7 @@ const fecha = new Date();
 // ************************************************************************************************************************
 export const getUserMandante = async (req: Request, res: Response) => {
 	try{
-		const users = await User.findAll({ where: { role: "USM" } });
+		const users = await Company.findAll({ where: { role: "USM" } });
 		res.json(users);
 	} catch (error) {
 		console.log(error);
@@ -25,7 +26,7 @@ export const getUserMandante = async (req: Request, res: Response) => {
 // ************************************************************************************************************************
 export const getUserEmpleado = async (req: Request, res: Response) => {
 	try {
-		const users = await User.findAll({ where: { role: "USC" } });
+		const users = await Company.findAll({ where: { role: "USC" } });
 		res.json(users);
 	} catch (error) {
 		console.log(error);

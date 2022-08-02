@@ -7,13 +7,14 @@ exports.updateUser = exports.createUser = exports.getemploxmandanteAdmin = expor
 const bcrypt_1 = require("../lib/bcrypt");
 const fecha_1 = require("../utils/fecha");
 const user_1 = __importDefault(require("../models/user"));
+const Company_1 = __importDefault(require("../models/Company"));
 const fecha = new Date();
 // ************************************************************************************************************************
 // !                                              VER USUARIO MANDANTE
 // ************************************************************************************************************************
 const getUserMandante = async (req, res) => {
     try {
-        const users = await user_1.default.findAll({ where: { role: "USM" } });
+        const users = await Company_1.default.findAll({ where: { role: "USM" } });
         res.json(users);
     }
     catch (error) {
@@ -27,7 +28,7 @@ exports.getUserMandante = getUserMandante;
 // ************************************************************************************************************************
 const getUserEmpleado = async (req, res) => {
     try {
-        const users = await user_1.default.findAll({ where: { role: "USC" } });
+        const users = await Company_1.default.findAll({ where: { role: "USC" } });
         res.json(users);
     }
     catch (error) {

@@ -294,8 +294,7 @@ export const validarRut = async (req: Request, res: Response) => {
 // ************************************************************************************************************************
 
 export const addPerson = async (req: Request, res: Response) => {
-	var request = require('request');
-
+	
 	const { person_no, name, gender, email, employee, employment, qr_url, userAuth } = req.body
 	const imagen = req.file;
 	const Filename = `${uuidv4()}.png`;
@@ -303,60 +302,39 @@ export const addPerson = async (req: Request, res: Response) => {
 	const UsuarioExiste = await Person.findOne({where: { person_no }});
 	const Employee_find = await Company.findOne({where: { id: employee }});
 	const Employment_find = await Employment.findOne({where: { id: employment }});
-
+	
 	const addPersonBucket = putS3newPerson(imagen,Employee_find.name,person_no, Filename)
-
+	
 	//  TODO Modularizar el código de abajo
-	let options
+	// var request = require('request');
+	// const ArrDiviceKey = ['F4970C5C3419ACBC','EF38DD40511C2EB2'];
 
-	options = {
-		'method': 'POST',
-		'url': '154.53.37.187:8190/api/person/add',
-		'headers': {
-			'Content-Type': 'application/x-www-form-urlencoded'
-		},
-		form: {
-			'deviceKey': 'F4970C5C3419ACBC',
-			'secret': 'tdx',
-			'id': person_no,
-			'name': name,
-			'idcardNum': qr_url,
-			'expireTime': '',
-			'blacklist': '',
-			'vaccination': '',
-			'vaccinationTime': '',
-			'remark': 'El Big Boss'
-		}
-	};
-	request(options, function (error:any, response:any) {
-		if (error) throw new Error(error);
-		console.log(response.body);
-	});
+	// let options
 
-	options = {
-		'method': 'POST',
-		'url': '154.53.37.187:8190/api/person/add',
-		'headers': {
-			'Content-Type': 'application/x-www-form-urlencoded'
-		},
-		form: {
-			'deviceKey': 'EF38DD40511C2EB2',
-			'secret': 'tdx',
-			'id': person_no,
-			'name': name,
-			'idcardNum': qr_url,
-			'expireTime': '',
-			'blacklist': '',
-			'vaccination': '',
-			'vaccinationTime': '',
-			'remark': 'El Big Boss'
-		}
-	};
-	request(options, function (error:any, response:any) {
-		if (error) throw new Error(error);
-		console.log(response.body);
-	});
-	// 
+	// options = {
+	// 	'method': 'POST',
+	// 	'url': '154.53.37.187:8190/api/person/add',
+	// 	'headers': {
+	// 		'Content-Type': 'application/x-www-form-urlencoded'
+	// 	},
+	// 	form: {
+	// 		'deviceKey': 'F4970C5C3419ACBC',
+	// 		'secret': 'tdx',
+	// 		'id': person_no,
+	// 		'name': name,
+	// 		'idcardNum': qr_url,
+	// 		'expireTime': '',
+	// 		'blacklist': '',
+	// 		'vaccination': '',
+	// 		'vaccinationTime': '',
+	// 		'remark': 'El Big Boss'
+	// 	}
+	// };
+	// request(options, function (error:any, response:any) {
+	// 	if (error) throw new Error(error);
+	// 	console.log(response.body);
+	// });
+
 
 	try {
 		if(UsuarioExiste){
@@ -455,7 +433,7 @@ export const photoPreview = async (req: Request, res: Response) => {
 				const respuesta = JSON.parse(body)
 				console.log(respuesta);
 				console.log(body);
-				console.log(deleteRegister(idLuxand));
+				// console.log(deleteRegister(idLuxand));
 				return res.status(200).json({respuesta, docfile_url});
 				// return res.status(200).json({respuesta,resizedImageBuffer});
 			}
@@ -463,19 +441,19 @@ export const photoPreview = async (req: Request, res: Response) => {
 		}
 
 
-		const deleteRegister=(idLuxand:any)=>{
-			const optDelete = {
-					method: 'DELETE', 
-					url: `https://api.luxand.cloud/subject/${idLuxand}`, 
-					qs: {}, 
-					headers: { 'token': "944628c81d2347cdac8941c17ab8e866" } 
-				};
-			request(optDelete, function (error:any, response:any, body:any) { 
-				if (error) throw new Error(error); 
-				console.log(body);
-				return body
-			});
-		}
+		// const deleteRegister=(idLuxand:any)=>{
+		// 	const optDelete = {
+		// 			method: 'DELETE', 
+		// 			url: `https://api.luxand.cloud/subject/${idLuxand}`, 
+		// 			qs: {}, 
+		// 			headers: { 'token': "944628c81d2347cdac8941c17ab8e866" } 
+		// 		};
+		// 	request(optDelete, function (error:any, response:any, body:any) { 
+		// 		if (error) throw new Error(error); 
+		// 		console.log(body);
+		// 		return body
+		// 	});
+		// }
 
 
 	} catch (error) {
@@ -632,7 +610,7 @@ export const sendEmailDeletePerson = async (req: Request, res: Response) => {
 			},
 		});
 
-		const mailOption = await transporter.sendMail({
+		const mandante = await transporter.sendMail({
 			from: '"Equipo Auditar" <aisense_bot@aisense.cl>', // sender address
 			to: email, // list of receivers
 			subject: "Solicitud de eliminación de usuario - SmartBoarding", // Subject line
@@ -644,7 +622,7 @@ export const sendEmailDeletePerson = async (req: Request, res: Response) => {
 				`,
 		});
 
-		transporter.sendMail(mailOption, (error: any, info: any) => {
+		transporter.sendMail(mandante, (error: any, info: any) => {
 			if (error) {
 				res.status(500).send(error.message);
 			} else {
@@ -652,6 +630,11 @@ export const sendEmailDeletePerson = async (req: Request, res: Response) => {
 				res.status(200).json(req.body);
 			}
 		});
+
+
+
+
+
 
 		return res.status(200).json({ mensaje: "Se envió un correo de recuperación", estado: "ok" });
 	} catch (error) {

@@ -10,6 +10,7 @@ import userRoutes from '../routes/users'
 import authRoutes from '../routes/auth'
 import personRoutes from '../routes/person'
 import recordsRoutes from '../routes/records'
+import dashboardRoutes from '../routes/dashboard'
 
 
 class Server {
@@ -21,6 +22,7 @@ class Server {
     person: "/api/person",
     auth : "/api/auth",
     records : "/api/records",
+    dashboard : "/api/dashboard",
   };
 
   constructor() {
@@ -55,6 +57,7 @@ class Server {
     this.app.use(this.apiPaths.person, personRoutes) 
     this.app.use(this.apiPaths.records, recordsRoutes) 
     this.app.use(this.apiPaths.admin, adminRoutes) 
+    this.app.use(this.apiPaths.dashboard, dashboardRoutes) 
   }
 
   listen() { //Funcion con la cual inicio el server

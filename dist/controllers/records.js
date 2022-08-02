@@ -7,12 +7,12 @@ exports.updateRecord = exports.deleteRecord = exports.downReport = exports.downl
 const Pass_Record_1 = __importDefault(require("../models/Pass_Record"));
 const fecha_1 = require("../utils/fecha");
 const xl = require("excel4node");
-const path_1 = __importDefault(require("path"));
 const uuid_1 = require("uuid");
 const Person_1 = __importDefault(require("../models/Person"));
 const s3_1 = require("../lib/s3");
+const path_1 = __importDefault(require("path"));
 const now = new Date();
-const { Op } = require("sequelize");
+const { Op, QueryTypes } = require("sequelize");
 // ************************************************************************************************************************
 // !                                                ULTIMAS 500 PASADAS / 2dias
 // ************************************************************************************************************************
@@ -65,13 +65,14 @@ const recordsToDay = async (req, res) => {
         Pass_Records.map((pass) => {
             const urls = pass.dataValues.person_resource_url;
             if (urls) {
-                pass.dataValues.resource_url = (0, s3_1.getUrlS3)(pass.dataValues.group_name, urls.split('/')[8], pass.dataValues.person_no);
+                pass.dataValues.resource_url = (0, s3_1.getUrlS3)(pass.dataValues.group_name, urls, pass.dataValues.person_no);
+                // pass.dataValues.resource_url = getUrlS3(pass.dataValues.group_name,  urls.split('/')[8], pass.dataValues.person_no)	//TODO Evaluar bien la ruta
             }
             pass.dataValues.pass_img_url = (0, s3_1.getUrlS3PassRecord)(pass.dataValues.pass_img_url);
         });
         setTimeout(() => {
             return res.status(200).json(Pass_Records);
-        }, 3000);
+        }, 2000);
     }
     catch (error) {
         console.log(error);

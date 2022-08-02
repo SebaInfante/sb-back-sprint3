@@ -1,16 +1,20 @@
-import { Response, Request } from "express";
 import Pass_Record from "../models/Pass_Record";
 
 import { restarDias, sumarDias, formatDate } from "../utils/fecha";
 
 const xl = require("excel4node");
-import path from "path";
 import { v4 as uuidv4 } from 'uuid';
 import Person from "../models/Person";
 import { getUrlS3, getUrlS3PassRecord } from "../lib/s3";
-const now = new Date();
-const { Op } = require("sequelize");
 
+import { Response, Request } from "express";
+import path from "path";
+
+const now = new Date();
+
+const { Op, QueryTypes } = require("sequelize");
+
+import db from "../db/connectionResgisters"
 
 // ************************************************************************************************************************
 // !                                                ULTIMAS 500 PASADAS / 2dias
@@ -65,7 +69,8 @@ export const recordsToDay = async (req: Request, res: Response) => {
 			const urls = pass.dataValues.person_resource_url
 
 			if(urls){
-				pass.dataValues.resource_url = getUrlS3(pass.dataValues.group_name,  urls.split('/')[8], pass.dataValues.person_no)	
+				pass.dataValues.resource_url = getUrlS3(pass.dataValues.group_name,  urls, pass.dataValues.person_no)	
+				// pass.dataValues.resource_url = getUrlS3(pass.dataValues.group_name,  urls.split('/')[8], pass.dataValues.person_no)	//TODO Evaluar bien la ruta
 			}
 
 			pass.dataValues.pass_img_url = getUrlS3PassRecord(pass.dataValues.pass_img_url)
@@ -73,7 +78,7 @@ export const recordsToDay = async (req: Request, res: Response) => {
 		})
 		setTimeout(() => {
 			return res.status(200).json(Pass_Records);
-		}, 3000);
+		}, 2000);
 
 	} catch (error) {
 		console.log(error);

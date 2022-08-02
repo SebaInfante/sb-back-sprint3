@@ -276,7 +276,6 @@ exports.validarRut = validarRut;
 // !                                             Agrega una nueva persona a los registros (data y avatar).
 // ************************************************************************************************************************
 const addPerson = async (req, res) => {
-    var request = require('request');
     const { person_no, name, gender, email, employee, employment, qr_url, userAuth } = req.body;
     const imagen = req.file;
     const Filename = `${(0, uuid_1.v4)()}.png`;
@@ -285,56 +284,32 @@ const addPerson = async (req, res) => {
     const Employment_find = await Employment_1.default.findOne({ where: { id: employment } });
     const addPersonBucket = (0, s3_1.putS3newPerson)(imagen, Employee_find.name, person_no, Filename);
     //  TODO Modularizar el código de abajo
-    let options;
-    options = {
-        'method': 'POST',
-        'url': '154.53.37.187:8190/api/person/add',
-        'headers': {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        form: {
-            'deviceKey': 'F4970C5C3419ACBC',
-            'secret': 'tdx',
-            'id': person_no,
-            'name': name,
-            'idcardNum': qr_url,
-            'expireTime': '',
-            'blacklist': '',
-            'vaccination': '',
-            'vaccinationTime': '',
-            'remark': 'El Big Boss'
-        }
-    };
-    request(options, function (error, response) {
-        if (error)
-            throw new Error(error);
-        console.log(response.body);
-    });
-    options = {
-        'method': 'POST',
-        'url': '154.53.37.187:8190/api/person/add',
-        'headers': {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        form: {
-            'deviceKey': 'EF38DD40511C2EB2',
-            'secret': 'tdx',
-            'id': person_no,
-            'name': name,
-            'idcardNum': qr_url,
-            'expireTime': '',
-            'blacklist': '',
-            'vaccination': '',
-            'vaccinationTime': '',
-            'remark': 'El Big Boss'
-        }
-    };
-    request(options, function (error, response) {
-        if (error)
-            throw new Error(error);
-        console.log(response.body);
-    });
-    // 
+    // var request = require('request');
+    // const ArrDiviceKey = ['F4970C5C3419ACBC','EF38DD40511C2EB2'];
+    // let options
+    // options = {
+    // 	'method': 'POST',
+    // 	'url': '154.53.37.187:8190/api/person/add',
+    // 	'headers': {
+    // 		'Content-Type': 'application/x-www-form-urlencoded'
+    // 	},
+    // 	form: {
+    // 		'deviceKey': 'F4970C5C3419ACBC',
+    // 		'secret': 'tdx',
+    // 		'id': person_no,
+    // 		'name': name,
+    // 		'idcardNum': qr_url,
+    // 		'expireTime': '',
+    // 		'blacklist': '',
+    // 		'vaccination': '',
+    // 		'vaccinationTime': '',
+    // 		'remark': 'El Big Boss'
+    // 	}
+    // };
+    // request(options, function (error:any, response:any) {
+    // 	if (error) throw new Error(error);
+    // 	console.log(response.body);
+    // });
     try {
         if (UsuarioExiste) {
             const updatePerson = {
@@ -428,25 +403,24 @@ const photoPreview = async (req, res) => {
                 const respuesta = JSON.parse(body);
                 console.log(respuesta);
                 console.log(body);
-                console.log(deleteRegister(idLuxand));
+                // console.log(deleteRegister(idLuxand));
                 return res.status(200).json({ respuesta, docfile_url });
                 // return res.status(200).json({respuesta,resizedImageBuffer});
             });
         }
-        const deleteRegister = (idLuxand) => {
-            const optDelete = {
-                method: 'DELETE',
-                url: `https://api.luxand.cloud/subject/${idLuxand}`,
-                qs: {},
-                headers: { 'token': "944628c81d2347cdac8941c17ab8e866" }
-            };
-            request(optDelete, function (error, response, body) {
-                if (error)
-                    throw new Error(error);
-                console.log(body);
-                return body;
-            });
-        };
+        // const deleteRegister=(idLuxand:any)=>{
+        // 	const optDelete = {
+        // 			method: 'DELETE', 
+        // 			url: `https://api.luxand.cloud/subject/${idLuxand}`, 
+        // 			qs: {}, 
+        // 			headers: { 'token': "944628c81d2347cdac8941c17ab8e866" } 
+        // 		};
+        // 	request(optDelete, function (error:any, response:any, body:any) { 
+        // 		if (error) throw new Error(error); 
+        // 		console.log(body);
+        // 		return body
+        // 	});
+        // }
     }
     catch (error) {
         console.log(error);
@@ -587,7 +561,7 @@ const sendEmailDeletePerson = async (req, res) => {
                 pass: process.env.PASSW_RECOVERY,
             },
         });
-        const mailOption = await transporter.sendMail({
+        const mandante = await transporter.sendMail({
             from: '"Equipo Auditar" <aisense_bot@aisense.cl>',
             to: email,
             subject: "Solicitud de eliminación de usuario - SmartBoarding",
@@ -598,7 +572,7 @@ const sendEmailDeletePerson = async (req, res) => {
 				<p> Saludos</p>
 				`,
         });
-        transporter.sendMail(mailOption, (error, info) => {
+        transporter.sendMail(mandante, (error, info) => {
             if (error) {
                 res.status(500).send(error.message);
             }
