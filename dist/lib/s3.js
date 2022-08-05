@@ -79,9 +79,9 @@ const getUrlS3 = (group_name, name, person_no) => {
     const params = {
         Key: `${process.env.OBJ_STG_FOLDER}/avatar/${empresa}/${person_no}/${name}`,
         Bucket,
-        Expires: 60 * 15
+        Expires: 60 * 15 //* El tiempo que dura la URl en minutos
     };
-    return exports.s3.getSignedUrl("getObject", params);
+    return exports.s3.getSignedUrl("getObject", params); //* Envío estos datos a la funcion 'getSignedUrl' del paquete de s3(aws)
 };
 exports.getUrlS3 = getUrlS3;
 const getUrlS3Docfile = (group_name, name, person_no) => {
@@ -94,8 +94,8 @@ const getUrlS3Docfile = (group_name, name, person_no) => {
 };
 exports.getUrlS3Docfile = getUrlS3Docfile;
 const putS3newPerson = (imagen, group_name, person_no, Filename) => {
-    const Body = Buffer.from(imagen?.buffer);
-    const Key = `${process.env.OBJ_STG_FOLDER}/avatar/${group_name}/${person_no}/${Filename}`;
+    const Body = Buffer.from(imagen?.buffer); //*  El body es el archivo a subir (doc, img o cualquier cosa)
+    const Key = `${process.env.OBJ_STG_FOLDER}/avatar/${group_name}/${person_no}/${Filename}`; //*  La Key es la ruta donde se va a guardar
     exports.s3.putObject({ Body, Bucket, Key, ContentType: imagen.mimetype, }, function (err, data) {
         if (err) {
             console.log('❌-putS3newPerson ', err);

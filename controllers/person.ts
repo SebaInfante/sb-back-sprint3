@@ -61,7 +61,7 @@ export const getPersons = async (req: Request, res: Response) => {
 					'id', 
 					'email', 
 					'person_name', 
-					'create_time', 
+					['update_time', 'create_time'],
 					'status',
 					['avatar_url', 'avatar'], 
 					['person_no','id_card'],
@@ -75,11 +75,11 @@ export const getPersons = async (req: Request, res: Response) => {
 						{employee_name: {[Op.substring]: employee}},
 						{employment_name: {[Op.substring]: ocupacion}},
 						{deleted_flag: 0},
-						{create_time: {[Op.between]: [fechaAnterior, fechaActual]}}
+						{update_time: {[Op.between]: [fechaAnterior, fechaActual]}}
 					],
 				},
 				order: [
-					['create_time', 'DESC']],
+					['update_time', 'DESC']],
 				limit: 500
 			}
 		);
@@ -294,47 +294,64 @@ export const validarRut = async (req: Request, res: Response) => {
 // ************************************************************************************************************************
 
 export const addPerson = async (req: Request, res: Response) => {
-	
+	const fecha = new Date()
+	const gmt:any = process.env.GMT
+	fecha.setHours(fecha.getHours()-gmt)
+
 	const { person_no, name, gender, email, employee, employment, qr_url, userAuth } = req.body
-	const imagen = req.file;
+	const imagen:any = req.file;
+
 	const Filename = `${uuidv4()}.png`;
 
 	const UsuarioExiste = await Person.findOne({where: { person_no }});
 	const Employee_find = await Company.findOne({where: { id: employee }});
 	const Employment_find = await Employment.findOne({where: { id: employment }});
 	
-	const addPersonBucket = putS3newPerson(imagen,Employee_find.name,person_no, Filename)
+	putS3newPerson(imagen,Employee_find.name,person_no, Filename)
+
+	// const ArrDiviceKey = ['F4970C5C3419ACBC','EF38DD40511C2EB2', FBDAE5D85255288C];
+
+	const myHeaders = new Headers();
+	myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 	
-	//  TODO Modularizar el código de abajo
-	// var request = require('request');
-	// const ArrDiviceKey = ['F4970C5C3419ACBC','EF38DD40511C2EB2'];
+	var urlencodedAddPerson = new URLSearchParams();
+	
+	urlencodedAddPerson.append("deviceKey", "FBDAE5D85255288C");
+	urlencodedAddPerson.append("secret", "tdx");
+	urlencodedAddPerson.append("id", person_no);
+	urlencodedAddPerson.append("name", name);
+	urlencodedAddPerson.append("idcardNum", qr_url);
+	urlencodedAddPerson.append("expireTime", "");
+	urlencodedAddPerson.append("blacklist", "");
+	urlencodedAddPerson.append("vaccination", "");
+	urlencodedAddPerson.append("vaccinationTime", "");
+	urlencodedAddPerson.append("remark", "El Big Boss");
+	
+	const requestOptionsAddPerson:any = {
+		method: 'POST',
+		headers: myHeaders,
+		body: urlencodedAddPerson,
+		redirect: 'follow'
+	};
 
-	// let options
+	fetch("http://154.53.37.187:8190/api/person/add", requestOptionsAddPerson).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));
 
-	// options = {
-	// 	'method': 'POST',
-	// 	'url': '154.53.37.187:8190/api/person/add',
-	// 	'headers': {
-	// 		'Content-Type': 'application/x-www-form-urlencoded'
-	// 	},
-	// 	form: {
-	// 		'deviceKey': 'F4970C5C3419ACBC',
-	// 		'secret': 'tdx',
-	// 		'id': person_no,
-	// 		'name': name,
-	// 		'idcardNum': qr_url,
-	// 		'expireTime': '',
-	// 		'blacklist': '',
-	// 		'vaccination': '',
-	// 		'vaccinationTime': '',
-	// 		'remark': 'El Big Boss'
-	// 	}
-	// };
-	// request(options, function (error:any, response:any) {
-	// 	if (error) throw new Error(error);
-	// 	console.log(response.body);
-	// });
+// **********************
+		var urlencodedAddFace = new URLSearchParams();
+		urlencodedAddFace.append("deviceKey", "FBDAE5D85255288C");
+		urlencodedAddFace.append("secret", "tdx");
+		urlencodedAddFace.append("personId", person_no);
+		urlencodedAddFace.append("faceId", "");
+		urlencodedAddFace.append("imgBase64", Buffer.from(imagen?.buffer).toString('base64'));
+		
+		const requestOptionsAddFace:any = {
+			method: 'POST',
+			headers: myHeaders,
+			body: urlencodedAddFace,
+			redirect: 'follow'
+		};
 
+		fetch("http://154.53.37.187:8190/api/face/add", requestOptionsAddFace).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));
 
 	try {
 		if(UsuarioExiste){
@@ -351,7 +368,7 @@ export const addPerson = async (req: Request, res: Response) => {
 				avatar_size : imagen?.size,
 				avatar_dimensions : "700*700",
 				avatar_suffix : ".png",
-				update_time: formatDate(new Date()),
+				update_time: formatDate(fecha),
 				update_user : userAuth.name,
 				deleted_flag: 0
 			}
@@ -361,7 +378,7 @@ export const addPerson = async (req: Request, res: Response) => {
 				employer:employee,
 				person_no,
 				employment,
-				update_time: formatDate(new Date()),
+				update_time: formatDate(fecha),
 				update_user : userAuth.name,
 				deleted_flag: 0
 			}
@@ -381,7 +398,9 @@ export const addPerson = async (req: Request, res: Response) => {
 				avatar_size : imagen?.size,
 				avatar_dimensions : "700*700",
 				avatar_suffix : ".png",
-				create_user : userAuth.name
+				create_user : userAuth.name,
+				update_time : formatDate(fecha),
+				create_time : formatDate(fecha)
 			}
 			
 			const respPerson = Person.build(newPerson);
@@ -550,6 +569,25 @@ export const deletePerson = async (req: Request, res: Response) => {
 		await Person.update(data, {where:{person_no}})
 		await Employee.update(data, {where:{person_no}})
 		await Docfile.update(data, {where:{person_no}})
+
+
+
+		var myHeaders = new Headers();
+		myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+		var urlencoded = new URLSearchParams();
+		urlencoded.append("deviceKey", "FBDAE5D85255288C");
+		urlencoded.append("secret", "tdx");
+		urlencoded.append("personId", person_no);
+
+		var requestOptions:any = {
+			method: 'POST',
+			headers: myHeaders,
+			body: urlencoded,
+			redirect: 'follow'
+		};
+
+		fetch("http://154.53.37.187:8190/api/person/del", requestOptions).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));
 
 		return res.status(200).json({ msg: "Usuario Eliminado correctamente"});
 	} catch (error) {

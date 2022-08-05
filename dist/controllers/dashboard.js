@@ -37,6 +37,7 @@ const pasadasDash = async (req, res) => {
         fecha.setHours(fecha.getHours() - 4);
         console.log("🚀 ~ file: records.ts ~ line 43 ~ pasadasDash ~ fecha", fecha);
         const diaNombre = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+        const nombreEmpresas = await connectionResgisters_1.default.query(`select group_name AS empresa from app_pass_records where  deleted_flag = 0 group by group_name`, { type: QueryTypes.SELECT });
         const menos0 = (0, fecha_1.restarDias)(fecha, 0).split("T", 1).toString();
         const nombre0 = diaNombre[fecha.getDay()];
         const menos1 = (0, fecha_1.restarDias)(fecha, 1).split("T", 1).toString();
@@ -60,7 +61,7 @@ const pasadasDash = async (req, res) => {
         const dia4 = await connectionResgisters_1.default.query(`select count(distinct person_no) AS asistencia, group_name AS empresa from app_pass_records where pass_create_time like '%${menos4}%' group by group_name`, { type: QueryTypes.SELECT });
         const dia5 = await connectionResgisters_1.default.query(`select count(distinct person_no) AS asistencia, group_name AS empresa from app_pass_records where pass_create_time like '%${menos5}%' group by group_name`, { type: QueryTypes.SELECT });
         const dia6 = await connectionResgisters_1.default.query(`select count(distinct person_no) AS asistencia, group_name AS empresa from app_pass_records where pass_create_time like '%${menos6}%' group by group_name`, { type: QueryTypes.SELECT });
-        const Dashboard = { dias, nombre, dia0, dia1, dia2, dia3, dia4, dia5, dia6 };
+        const Dashboard = { dias, nombreEmpresas, nombre, dia0, dia1, dia2, dia3, dia4, dia5, dia6 };
         return res.status(200).json(Dashboard);
     }
     catch (error) {
@@ -77,6 +78,7 @@ const turnosDash = async (req, res) => {
         const userAuth = req.body.userAuth;
         let employee;
         let contratista = req.body.contratista || ""; //TODO aqui selecciona al contratista
+        console.log("🚀 ~ file: dashboard.ts ~ line 86 ~ turnosDash ~ contratista", req.body);
         if (contratista == "all") {
             contratista = "";
         }
@@ -88,8 +90,11 @@ const turnosDash = async (req, res) => {
         }
         // *****************************
         const fecha = new Date();
-        fecha.setHours(fecha.getHours() - 4);
+        const GMT = process.env.GMT;
+        fecha.setHours(fecha.getHours() - GMT);
         const diaNombre = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+        const nombreTurnos = await connectionResgisters_1.default.query(`select calculated_shift AS turno from app_pass_records where group_name like '%${employee}%' AND deleted_flag = 0 group by calculated_shift`, { type: QueryTypes.SELECT });
+        const nombreEmpresas = await connectionResgisters_1.default.query(`select group_name AS empresa from app_pass_records where deleted_flag = 0 group by group_name`, { type: QueryTypes.SELECT });
         const menos0 = (0, fecha_1.restarDias)(fecha, 0).split("T", 1).toString();
         const nombre0 = diaNombre[fecha.getDay()];
         const menos1 = (0, fecha_1.restarDias)(fecha, 1).split("T", 1).toString();
@@ -113,7 +118,7 @@ const turnosDash = async (req, res) => {
         const dia4 = await connectionResgisters_1.default.query(`select COUNT(distinct person_no) AS asistencia, calculated_shift AS turno from app_pass_records where group_name like '%${employee}%' AND pass_create_time like '%${menos4}%' group by calculated_shift`, { type: QueryTypes.SELECT });
         const dia5 = await connectionResgisters_1.default.query(`select COUNT(distinct person_no) AS asistencia, calculated_shift AS turno from app_pass_records where group_name like '%${employee}%' AND pass_create_time like '%${menos5}%' group by calculated_shift`, { type: QueryTypes.SELECT });
         const dia6 = await connectionResgisters_1.default.query(`select COUNT(distinct person_no) AS asistencia, calculated_shift AS turno from app_pass_records where group_name like '%${employee}%' AND pass_create_time like '%${menos6}%' group by calculated_shift`, { type: QueryTypes.SELECT });
-        const Dashboard = { dias, nombre, dia0, dia1, dia2, dia3, dia4, dia5, dia6 };
+        const Dashboard = { dias, nombre, nombreTurnos, nombreEmpresas, dia0, dia1, dia2, dia3, dia4, dia5, dia6 };
         return res.status(200).json(Dashboard);
     }
     catch (error) {
@@ -122,6 +127,9 @@ const turnosDash = async (req, res) => {
     }
 };
 exports.turnosDash = turnosDash;
+// ************************************************************************************************************************
+// !                                                Turnos Dashboard
+// ************************************************************************************************************************
 const entradasSalidasDiarias = async (req, res) => {
     const userAuth = req.body.userAuth;
     let employee = '';
@@ -129,7 +137,8 @@ const entradasSalidasDiarias = async (req, res) => {
         employee = userAuth.name;
     try {
         const now = new Date();
-        now.setHours(now.getHours() - 4);
+        const GMT = process.env.GMT;
+        now.setHours(now.getHours() - GMT);
         const fecha = now.toISOString().split("T", 1).toString();
         console.log("🚀 ~ file: dashboard.ts ~ line 86 ~ entradasSalidasDiarias ~ fecha", fecha);
         const entradas = await connectionResgisters_1.default.query(`SELECT COUNT(id) AS entradas FROM app_pass_records WHERE pass_direction = 1 AND pass_create_time like '%${fecha}%' AND group_name like '%${employee}%'`, { type: QueryTypes.SELECT });
@@ -149,7 +158,8 @@ const asistenciaDiarias = async (req, res) => {
         employee = userAuth.name;
     try {
         const now = new Date();
-        now.setHours(now.getHours() - 4);
+        const GMT = process.env.GMT;
+        now.setHours(now.getHours() - GMT);
         const fecha = now.toISOString().split("T", 1).toString();
         const asistencia = await connectionResgisters_1.default.query(`select count(distinct person_no) AS asistencia from app_pass_records where pass_create_time like '%${fecha}%' AND group_name like '%${employee}%'`, { type: QueryTypes.SELECT });
         return res.status(200).json(asistencia);
@@ -160,5 +170,4 @@ const asistenciaDiarias = async (req, res) => {
     }
 };
 exports.asistenciaDiarias = asistenciaDiarias;
-// AND group_name LIKE '%${employee}%'
 //# sourceMappingURL=dashboard.js.map
