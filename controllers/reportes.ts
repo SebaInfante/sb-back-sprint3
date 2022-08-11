@@ -9,8 +9,6 @@ import db from "../db/connectionResgisters"
 import {  getUrlS3  } from "../lib/s3";
 
 
-
-
 export const asistencia = async (req: Request, res: Response) => {
     const userAuth = req.body.userAuth;
     let employee='';

@@ -376,7 +376,8 @@ const addPerson = async (req, res) => {
                 employer: employee,
                 person_no,
                 employment,
-                create_user: userAuth.name
+                create_user: userAuth.name,
+                update_time: (0, fecha_1.formatDate)(fecha),
             };
             const respEmployee = Employee_1.default.build(newEmployee);
             await respEmployee.save();

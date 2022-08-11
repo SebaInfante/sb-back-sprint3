@@ -72,3 +72,4 @@ const Company = db.define<any>(
 );
 
 export default Company;
+

@@ -410,7 +410,8 @@ export const addPerson = async (req: Request, res: Response) => {
 				employer:employee,
 				person_no,
 				employment,
-				create_user : userAuth.name
+				create_user : userAuth.name,
+				update_time : formatDate(fecha),
 			}
 			const respEmployee = Employee.build(newEmployee);
 			await respEmployee.save()
