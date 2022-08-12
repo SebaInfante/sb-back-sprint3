@@ -5,6 +5,7 @@ import Employment from "../models/Employment";
 import User from "../models/user";
 import Company from "../models/Company";
 import Shift_Config from "../models/Shift_Config";
+import Device from "../models/Device";
 const { Op } = require("sequelize");
 
 const fecha = new Date();
@@ -432,6 +433,120 @@ export const getUser = async (req: Request, res: Response) => {
 		user
 			? res.json(user)
 			: res.status(404).json({ msg: `User with id ${id} not found` });
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ msg: "Contact the administrator" });
+	}
+};
+
+
+
+
+
+
+
+
+export const listDevice = async (req: Request, res: Response) => {
+	try {
+		const device = await Device.findAll({where:{deleted_flag : 0}});
+		res.status(200).json(device)
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ msg: "Contact the administrator" });
+	}
+};
+
+
+export const addDevice = async (req: Request, res: Response) => {
+	const fecha = new Date()
+	const gmt:any = process.env.GMT
+	fecha.setHours(fecha.getHours()-gmt)
+	const  {site_id, group_id, device_key, name, logo_uri = '', current_version_id, current_version_name, ip,  direction, userAuth } = req.body
+
+	try {
+		const newDevice = {
+			site_id:1,  //Que es?
+			group_id:0, //Que es?
+			device_key,
+			name,
+			logo_uri,
+			current_version_id, //Que es?
+			current_version_name,  //Que es?
+			person_count:0,
+			face_count:0,
+			disk_space:0,
+			ip,
+			last_active_time:formatDate(fecha),
+			is_online:0,
+			direction,
+			status:1,
+			create_time:formatDate(fecha),
+			create_user:userAuth.name,
+			deleted_flag:0
+		}
+
+		const device = Device.build(newDevice);
+		await device.save();
+
+		res.status(200).json(newDevice)
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ msg: "Contact the administrator" });
+	}
+};
+
+
+
+export const updateDevice = async (req: Request, res: Response) => {
+	const device_key = req.params.id
+	const fecha = new Date()
+	const gmt:any = process.env.GMT
+	fecha.setHours(fecha.getHours()-gmt)
+	const  {site_id, group_id, name, logo_uri = '', current_version_id, current_version_name, ip,  direction, userAuth } = req.body
+
+	try {
+		const updateDevice = {
+			site_id:1,  //Que es?
+			group_id:0, //Que es?
+			device_key,
+			name,
+			logo_uri,
+			current_version_id, //Que es?
+			current_version_name,  //Que es?
+			person_count:0,
+			face_count:0,
+			disk_space:0,
+			ip,
+			last_active_time:formatDate(fecha),
+			is_online:0,
+			direction,
+			status:1,
+			update_time:formatDate(fecha),
+			update_user:userAuth.name,
+			deleted_flag:0
+		}
+		await Device.update( updateDevice , { where: { device_key } });
+		res.status(200).json(updateDevice)
+
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ msg: "Contact the administrator" });
+	}
+};
+
+export const deleteDevice = async (req: Request, res: Response) => {
+	const device_key = req.params.id
+	const { userAuth } = req.body
+	try {
+		const updateDevice = {
+			update_time:formatDate(fecha),
+			update_user:userAuth.name,
+			deleted_flag:1
+		}
+
+		await Device.update( updateDevice, { where: { device_key } });
+		res.status(200).json(updateDevice)
+
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });

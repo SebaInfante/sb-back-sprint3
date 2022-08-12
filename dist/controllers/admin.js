@@ -3,13 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUser = exports.getUsers = exports.deleteEmploment = exports.deleteTurno = exports.deleteCompany = exports.deleteUser = exports.addDocument = exports.addEmployement = exports.getAllEmployment = exports.getTurnosCompany = exports.getAllTurnos = exports.addTurnoEfectivo = exports.getAllCompanyxMandante = exports.getAllCompanyMandante = exports.getAllMandante = exports.getEmployment = exports.getTurno = exports.getCompany = exports.getAllCompany = exports.addCompany = void 0;
+exports.deleteDevice = exports.updateDevice = exports.addDevice = exports.listDevice = exports.getUser = exports.getUsers = exports.deleteEmploment = exports.deleteTurno = exports.deleteCompany = exports.deleteUser = exports.addDocument = exports.addEmployement = exports.getAllEmployment = exports.getTurnosCompany = exports.getAllTurnos = exports.addTurnoEfectivo = exports.getAllCompanyxMandante = exports.getAllCompanyMandante = exports.getAllMandante = exports.getEmployment = exports.getTurno = exports.getCompany = exports.getAllCompany = exports.addCompany = void 0;
 const fecha_1 = require("../utils/fecha");
 const Document_1 = __importDefault(require("../models/Document"));
 const Employment_1 = __importDefault(require("../models/Employment"));
 const user_1 = __importDefault(require("../models/user"));
 const Company_1 = __importDefault(require("../models/Company"));
 const Shift_Config_1 = __importDefault(require("../models/Shift_Config"));
+const Device_1 = __importDefault(require("../models/Device"));
 const { Op } = require("sequelize");
 const fecha = new Date();
 // ************************************************************************************************************************
@@ -414,4 +415,105 @@ const getUser = async (req, res) => {
     }
 };
 exports.getUser = getUser;
+const listDevice = async (req, res) => {
+    try {
+        const device = await Device_1.default.findAll({ where: { deleted_flag: 0 } });
+        res.status(200).json(device);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ msg: "Contact the administrator" });
+    }
+};
+exports.listDevice = listDevice;
+const addDevice = async (req, res) => {
+    const fecha = new Date();
+    const gmt = process.env.GMT;
+    fecha.setHours(fecha.getHours() - gmt);
+    const { site_id, group_id, device_key, name, logo_uri = '', current_version_id, current_version_name, ip, direction, userAuth } = req.body;
+    try {
+        const newDevice = {
+            site_id: 1,
+            group_id: 0,
+            device_key,
+            name,
+            logo_uri,
+            current_version_id,
+            current_version_name,
+            person_count: 0,
+            face_count: 0,
+            disk_space: 0,
+            ip,
+            last_active_time: (0, fecha_1.formatDate)(fecha),
+            is_online: 0,
+            direction,
+            status: 1,
+            create_time: (0, fecha_1.formatDate)(fecha),
+            create_user: userAuth.name,
+            deleted_flag: 0
+        };
+        const device = Device_1.default.build(newDevice);
+        await device.save();
+        res.status(200).json(newDevice);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ msg: "Contact the administrator" });
+    }
+};
+exports.addDevice = addDevice;
+const updateDevice = async (req, res) => {
+    const device_key = req.params.id;
+    const fecha = new Date();
+    const gmt = process.env.GMT;
+    fecha.setHours(fecha.getHours() - gmt);
+    const { site_id, group_id, name, logo_uri = '', current_version_id, current_version_name, ip, direction, userAuth } = req.body;
+    try {
+        const updateDevice = {
+            site_id: 1,
+            group_id: 0,
+            device_key,
+            name,
+            logo_uri,
+            current_version_id,
+            current_version_name,
+            person_count: 0,
+            face_count: 0,
+            disk_space: 0,
+            ip,
+            last_active_time: (0, fecha_1.formatDate)(fecha),
+            is_online: 0,
+            direction,
+            status: 1,
+            update_time: (0, fecha_1.formatDate)(fecha),
+            update_user: userAuth.name,
+            deleted_flag: 0
+        };
+        await Device_1.default.update(updateDevice, { where: { device_key } });
+        res.status(200).json(updateDevice);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ msg: "Contact the administrator" });
+    }
+};
+exports.updateDevice = updateDevice;
+const deleteDevice = async (req, res) => {
+    const device_key = req.params.id;
+    const { userAuth } = req.body;
+    try {
+        const updateDevice = {
+            update_time: (0, fecha_1.formatDate)(fecha),
+            update_user: userAuth.name,
+            deleted_flag: 1
+        };
+        await Device_1.default.update(updateDevice, { where: { device_key } });
+        res.status(200).json(updateDevice);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ msg: "Contact the administrator" });
+    }
+};
+exports.deleteDevice = deleteDevice;
 //# sourceMappingURL=admin.js.map

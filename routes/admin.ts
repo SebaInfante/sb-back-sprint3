@@ -1,7 +1,7 @@
 
 import { Router } from 'express'
 import { check } from 'express-validator';
-import { getAllCompanyxMandante, deleteEmploment, getEmployment, getTurno, deleteTurno, getCompany, addCompany, getAllCompany, getAllMandante, getAllCompanyMandante, addTurnoEfectivo, getTurnosCompany, getAllTurnos, getAllEmployment, addEmployement, addDocument, deleteUser, getUsers, getUser, deleteCompany} from '../controllers/admin';
+import {listDevice,addDevice,updateDevice,deleteDevice, getAllCompanyxMandante, deleteEmploment, getEmployment, getTurno, deleteTurno, getCompany, addCompany, getAllCompany, getAllMandante, getAllCompanyMandante, addTurnoEfectivo, getTurnosCompany, getAllTurnos, getAllEmployment, addEmployement, addDocument, deleteUser, getUsers, getUser, deleteCompany} from '../controllers/admin';
 import { validarCampos } from '../middlewares/validar-campos';
 import { validarJWT } from "../middlewares/validar-jwt";
 import { esAdminRole } from '../middlewares/validar-role';
@@ -66,5 +66,21 @@ router.delete( "/deleteTurno/:id", [ validarJWT, esAdminRole ], deleteTurno );
 
 //TODO Eliminar una compañia
 router.delete( "/deleteEmploment/:id", [ validarJWT, esAdminRole ], deleteEmploment );
+
+
+//************* CRUD DIVICE
+
+//TODO Listar Device
+router.get( "/device", [ validarJWT, esAdminRole ], listDevice );
+//TODO Agregar Device
+router.post( "/device", [ validarJWT, esAdminRole ], addDevice );
+//TODO Editar Device
+router.post( "/device/:id", [ validarJWT, esAdminRole ], updateDevice );
+//TODO Eliminar Device
+router.delete( "/device/:id", [ validarJWT, esAdminRole ], deleteDevice );
+
+
+
+
 
 export default router

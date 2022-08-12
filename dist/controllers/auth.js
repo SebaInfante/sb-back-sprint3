@@ -106,9 +106,9 @@ const recoveryAccount = async (req, res) => {
 					<h1>Sistema de recuperación de contraseñas</h1>
 					<p>Usted solicito una recuperación de contraseña desde el sitio ${process.env.SITE_WEB_URL}. <br> Para recuperar su contraseña ingrese al siguiente link y genere una nueva contraseña</p>
 					
-					<small>${process.env.SITE_WEB_URL}/#/recovery-account/${token}</small>
+					<small>${process.env.SITE_WEB_URL}/#/recovery/${token}</small>
 					</br>
-					<a href="${process.env.SITE_WEB_URL}/#/recovery-account/${token}">Recuperar contraseña</a>
+					<a href="${process.env.SITE_WEB_URL}/#/recovery/${token}">Recuperar contraseña</a>
 
 					`, // html body
             });
@@ -145,10 +145,10 @@ const changePassword = async (req, res) => {
         const payload = jsonwebtoken_2.default.verify(token, secretKey);
         const userAuth = await user_1.default.findByPk(payload.uid);
         if (!userAuth) {
-            return res.status(401).json({ msg: "Token no valido" });
+            return res.status(401).json({ msg: "Usuario no existe" });
         }
         if (userAuth.deleted_flag == 1) {
-            return res.status(401).json({ msg: "Token no valido" });
+            return res.status(401).json({ msg: "Usuario eliminado" });
         }
         const newPassword = await (0, bcrypt_1.encriptar)(password);
         await user_1.default.update({ password: newPassword }, { where: { id: userAuth.id } });

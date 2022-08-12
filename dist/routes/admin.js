@@ -47,5 +47,14 @@ router.delete("/deleteCompany/:id", [validar_jwt_1.validarJWT, validar_role_1.es
 router.delete("/deleteTurno/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.deleteTurno);
 //TODO Eliminar una compañia
 router.delete("/deleteEmploment/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.deleteEmploment);
+//************* CRUD DIVICE
+//TODO Listar Device
+router.get("/device", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.listDevice);
+//TODO Agregar Device
+router.post("/device", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.addDevice);
+//TODO Editar Device
+router.post("/device/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.updateDevice);
+//TODO Eliminar Device
+router.delete("/device/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.deleteDevice);
 exports.default = router;
 //# sourceMappingURL=admin.js.map
