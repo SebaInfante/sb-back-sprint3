@@ -456,29 +456,40 @@ export const listDevice = async (req: Request, res: Response) => {
 	}
 };
 
+export const getDevice = async (req: Request, res: Response) => {
+	const device_key = req.params.id
+	try {
+		const device = await Device.findOne({where:{[Op.and]:[{device_key},{deleted_flag:0}]}});
+		res.status(200).json(device)
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ msg: "Contact the administrator" });
+	}
+};
+
 
 export const addDevice = async (req: Request, res: Response) => {
 	const fecha = new Date()
 	const gmt:any = process.env.GMT
 	fecha.setHours(fecha.getHours()-gmt)
-	const  {site_id, group_id, device_key, name, logo_uri = '', current_version_id, current_version_name, ip,  direction, userAuth } = req.body
+	const  { device_key, name, logo_uri = '', direction, userAuth } = req.body
 
 	try {
 		const newDevice = {
 			site_id:1,  //Que es?
 			group_id:0, //Que es?
-			device_key,
-			name,
-			logo_uri,
-			current_version_id, //Que es?
-			current_version_name,  //Que es?
+			device_key, //* */
+			name, //* */
+			logo_uri, //* */
+			current_version_id:0, //Que es?
+			current_version_name:'1.0.0.0',  //Que es?
 			person_count:0,
 			face_count:0,
 			disk_space:0,
-			ip,
+			ip:'192.168.1.0',
 			last_active_time:formatDate(fecha),
 			is_online:0,
-			direction,
+			direction, //* */
 			status:1,
 			create_time:formatDate(fecha),
 			create_user:userAuth.name,
@@ -502,28 +513,18 @@ export const updateDevice = async (req: Request, res: Response) => {
 	const fecha = new Date()
 	const gmt:any = process.env.GMT
 	fecha.setHours(fecha.getHours()-gmt)
-	const  {site_id, group_id, name, logo_uri = '', current_version_id, current_version_name, ip,  direction, userAuth } = req.body
+	const  {name, logo_uri = '', direction, is_online, status, userAuth } = req.body
 
 	try {
 		const updateDevice = {
-			site_id:1,  //Que es?
-			group_id:0, //Que es?
-			device_key,
-			name,
-			logo_uri,
-			current_version_id, //Que es?
-			current_version_name,  //Que es?
-			person_count:0,
-			face_count:0,
-			disk_space:0,
-			ip,
-			last_active_time:formatDate(fecha),
-			is_online:0,
-			direction,
-			status:1,
+			device_key, //* */
+			name, //* */
+			logo_uri, //* */
+			is_online, //* */
+			direction, //* */
+			status, //* */
 			update_time:formatDate(fecha),
 			update_user:userAuth.name,
-			deleted_flag:0
 		}
 		await Device.update( updateDevice , { where: { device_key } });
 		res.status(200).json(updateDevice)
@@ -536,6 +537,7 @@ export const updateDevice = async (req: Request, res: Response) => {
 
 export const deleteDevice = async (req: Request, res: Response) => {
 	const device_key = req.params.id
+    console.log("🚀 ~ file: admin.ts ~ line 529 ~ deleteDevice ~ device_key", device_key)
 	const { userAuth } = req.body
 	try {
 		const updateDevice = {

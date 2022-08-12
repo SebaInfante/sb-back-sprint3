@@ -138,18 +138,15 @@ const changePassword = async (req, res) => {
     try {
         const token = req.params.token;
         const password = req.body.password;
-        if (!token) {
+        if (!token)
             return res.status(401).json({ msg: "No hay token en la petición" });
-        }
         const secretKey = process.env.SECRETTOPRIVATEKEY;
         const payload = jsonwebtoken_2.default.verify(token, secretKey);
         const userAuth = await user_1.default.findByPk(payload.uid);
-        if (!userAuth) {
+        if (!userAuth)
             return res.status(401).json({ msg: "Usuario no existe" });
-        }
-        if (userAuth.deleted_flag == 1) {
+        if (userAuth.deleted_flag == 1)
             return res.status(401).json({ msg: "Usuario eliminado" });
-        }
         const newPassword = await (0, bcrypt_1.encriptar)(password);
         await user_1.default.update({ password: newPassword }, { where: { id: userAuth.id } });
         return res.status(200).json({ msg: "Cambio de contraseña exitoso" });

@@ -50,10 +50,12 @@ router.delete("/deleteEmploment/:id", [validar_jwt_1.validarJWT, validar_role_1.
 //************* CRUD DIVICE
 //TODO Listar Device
 router.get("/device", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.listDevice);
+//TODO Listar Device
+router.get("/device/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.getDevice);
 //TODO Agregar Device
 router.post("/device", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.addDevice);
 //TODO Editar Device
-router.post("/device/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.updateDevice);
+router.put("/device/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.updateDevice);
 //TODO Eliminar Device
 router.delete("/device/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.deleteDevice);
 exports.default = router;

@@ -13,7 +13,7 @@ router.post('/validacionToken', validacionToken);
 
 router.post('/recovery-account', [check('email','Email is required').not().isEmpty(),check('email','Email is not valid').isEmail(),validarCampos] ,recoveryAccount);
 
-router.post('/recovery-account/:token', [check('password','Password is required').not().isEmpty(),check('password','Password is required').isLength( { min: 6 } ),validarCampos] ,changePassword);
+router.post('/recovery-account/:token',changePassword);
 
 
 export default router

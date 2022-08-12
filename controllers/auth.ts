@@ -150,20 +150,16 @@ export const changePassword = async (req: Request, res: Response) => {
 	try {
 		const token = req.params.token;
 		const password = req.body.password;
-		
-		if (!token) {
-			return res.status(401).json({ msg: "No hay token en la petición" })}
+
+		if (!token) return res.status(401).json({ msg: "No hay token en la petición" })
 			
 		const secretKey = process.env.SECRETTOPRIVATEKEY!;
 		const payload: any = jwt.verify(token, secretKey);
 		const userAuth: any = await User.findByPk(payload.uid);
 
-		if (!userAuth) {
-			return res.status(401).json({ msg: "Usuario no existe" });
-		}
-		if (userAuth.deleted_flag == 1) {
-			return res.status(401).json({ msg: "Usuario eliminado" });
-		}
+		if (!userAuth) return res.status(401).json({ msg: "Usuario no existe" })
+		if (userAuth.deleted_flag == 1) return res.status(401).json({ msg: "Usuario eliminado" });
+		
 		const newPassword = await encriptar(password)
 		await User.update({ password: newPassword }, { where: { id: userAuth.id } });
 

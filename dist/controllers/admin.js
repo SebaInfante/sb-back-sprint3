@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteDevice = exports.updateDevice = exports.addDevice = exports.listDevice = exports.getUser = exports.getUsers = exports.deleteEmploment = exports.deleteTurno = exports.deleteCompany = exports.deleteUser = exports.addDocument = exports.addEmployement = exports.getAllEmployment = exports.getTurnosCompany = exports.getAllTurnos = exports.addTurnoEfectivo = exports.getAllCompanyxMandante = exports.getAllCompanyMandante = exports.getAllMandante = exports.getEmployment = exports.getTurno = exports.getCompany = exports.getAllCompany = exports.addCompany = void 0;
+exports.deleteDevice = exports.updateDevice = exports.addDevice = exports.getDevice = exports.listDevice = exports.getUser = exports.getUsers = exports.deleteEmploment = exports.deleteTurno = exports.deleteCompany = exports.deleteUser = exports.addDocument = exports.addEmployement = exports.getAllEmployment = exports.getTurnosCompany = exports.getAllTurnos = exports.addTurnoEfectivo = exports.getAllCompanyxMandante = exports.getAllCompanyMandante = exports.getAllMandante = exports.getEmployment = exports.getTurno = exports.getCompany = exports.getAllCompany = exports.addCompany = void 0;
 const fecha_1 = require("../utils/fecha");
 const Document_1 = __importDefault(require("../models/Document"));
 const Employment_1 = __importDefault(require("../models/Employment"));
@@ -426,11 +426,23 @@ const listDevice = async (req, res) => {
     }
 };
 exports.listDevice = listDevice;
+const getDevice = async (req, res) => {
+    const device_key = req.params.id;
+    try {
+        const device = await Device_1.default.findOne({ where: { [Op.and]: [{ device_key }, { deleted_flag: 0 }] } });
+        res.status(200).json(device);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({ msg: "Contact the administrator" });
+    }
+};
+exports.getDevice = getDevice;
 const addDevice = async (req, res) => {
     const fecha = new Date();
     const gmt = process.env.GMT;
     fecha.setHours(fecha.getHours() - gmt);
-    const { site_id, group_id, device_key, name, logo_uri = '', current_version_id, current_version_name, ip, direction, userAuth } = req.body;
+    const { device_key, name, logo_uri = '', direction, userAuth } = req.body;
     try {
         const newDevice = {
             site_id: 1,
@@ -438,12 +450,12 @@ const addDevice = async (req, res) => {
             device_key,
             name,
             logo_uri,
-            current_version_id,
-            current_version_name,
+            current_version_id: 0,
+            current_version_name: '1.0.0.0',
             person_count: 0,
             face_count: 0,
             disk_space: 0,
-            ip,
+            ip: '192.168.1.0',
             last_active_time: (0, fecha_1.formatDate)(fecha),
             is_online: 0,
             direction,
@@ -467,27 +479,17 @@ const updateDevice = async (req, res) => {
     const fecha = new Date();
     const gmt = process.env.GMT;
     fecha.setHours(fecha.getHours() - gmt);
-    const { site_id, group_id, name, logo_uri = '', current_version_id, current_version_name, ip, direction, userAuth } = req.body;
+    const { name, logo_uri = '', direction, is_online, status, userAuth } = req.body;
     try {
         const updateDevice = {
-            site_id: 1,
-            group_id: 0,
             device_key,
             name,
             logo_uri,
-            current_version_id,
-            current_version_name,
-            person_count: 0,
-            face_count: 0,
-            disk_space: 0,
-            ip,
-            last_active_time: (0, fecha_1.formatDate)(fecha),
-            is_online: 0,
+            is_online,
             direction,
-            status: 1,
+            status,
             update_time: (0, fecha_1.formatDate)(fecha),
             update_user: userAuth.name,
-            deleted_flag: 0
         };
         await Device_1.default.update(updateDevice, { where: { device_key } });
         res.status(200).json(updateDevice);
@@ -500,6 +502,7 @@ const updateDevice = async (req, res) => {
 exports.updateDevice = updateDevice;
 const deleteDevice = async (req, res) => {
     const device_key = req.params.id;
+    console.log("🚀 ~ file: admin.ts ~ line 529 ~ deleteDevice ~ device_key", device_key);
     const { userAuth } = req.body;
     try {
         const updateDevice = {
