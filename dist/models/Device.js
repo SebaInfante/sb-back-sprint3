@@ -24,6 +24,10 @@ const Device = connectionResgisters_1.default.define("app_device_base_info", {
         type: sequelize_1.DataTypes.STRING(24),
         allowNull: false,
     },
+    secret: {
+        type: sequelize_1.DataTypes.STRING(64),
+        allowNull: false,
+    },
     name: {
         type: sequelize_1.DataTypes.STRING(65),
         allowNull: true,

@@ -472,17 +472,18 @@ export const addDevice = async (req: Request, res: Response) => {
 	const fecha = new Date()
 	const gmt:any = process.env.GMT
 	fecha.setHours(fecha.getHours()-gmt)
-	const  { device_key, name, logo_uri = '', direction, userAuth } = req.body
+	const  { device_key, name, logo_uri = '', direction, secret,  userAuth } = req.body
 
 	try {
 		const newDevice = {
-			site_id:1,  //Que es?
-			group_id:0, //Que es?
+			site_id:1,
+			group_id:0,
 			device_key, //* */
 			name, //* */
 			logo_uri, //* */
-			current_version_id:0, //Que es?
-			current_version_name:'1.0.0.0',  //Que es?
+			secret, //* */
+			current_version_id:0,
+			current_version_name:'1.0.0.0',
 			person_count:0,
 			face_count:0,
 			disk_space:0,
@@ -490,7 +491,7 @@ export const addDevice = async (req: Request, res: Response) => {
 			last_active_time:formatDate(fecha),
 			is_online:0,
 			direction, //* */
-			status:1,
+			status:0,
 			create_time:formatDate(fecha),
 			create_user:userAuth.name,
 			deleted_flag:0
@@ -513,13 +514,15 @@ export const updateDevice = async (req: Request, res: Response) => {
 	const fecha = new Date()
 	const gmt:any = process.env.GMT
 	fecha.setHours(fecha.getHours()-gmt)
-	const  {name, logo_uri = '', direction, is_online, status, userAuth } = req.body
+	const  {name, logo_uri = '', direction, is_online, status , secret, userAuth } = req.body
 
 	try {
+		//TODO Ver la actualizacion
 		const updateDevice = {
 			device_key, //* */
 			name, //* */
 			logo_uri, //* */
+			secret, //* */
 			is_online, //* */
 			direction, //* */
 			status, //* */

@@ -15,6 +15,7 @@ const person_1 = __importDefault(require("../routes/person"));
 const records_1 = __importDefault(require("../routes/records"));
 const dashboard_1 = __importDefault(require("../routes/dashboard"));
 const reportes_1 = __importDefault(require("../routes/reportes"));
+const config_1 = __importDefault(require("../routes/config"));
 class Server {
     constructor() {
         this.apiPaths = {
@@ -25,6 +26,7 @@ class Server {
             records: "/api/records",
             dashboard: "/api/dashboard",
             reportes: "/api/reportes",
+            config: "/api/config",
         };
         this.app = (0, express_1.default)(); //Usar Express
         this.port = process.env.PORT || "8000"; //Habilitar el puerto del .env o el 8000
@@ -48,6 +50,12 @@ class Server {
         this.app.use(express_1.default.json()); //Habilita el uso del body y los transforma en json
         this.app.use(express_1.default.static('public')); // Habilita una pagina web
         this.app.use("/uploads", express_1.default.static(path_1.default.resolve("uploads"))); //?
+        this.app.use(function (req, res, next) {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+            res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+            next();
+        });
     }
     routes() {
         this.app.use(this.apiPaths.auth, auth_1.default); //Llamo a los rutas, en este caso el userRoutes
@@ -57,6 +65,7 @@ class Server {
         this.app.use(this.apiPaths.admin, admin_1.default);
         this.app.use(this.apiPaths.dashboard, dashboard_1.default);
         this.app.use(this.apiPaths.reportes, reportes_1.default);
+        this.app.use(this.apiPaths.config, config_1.default);
     }
     listen() {
         this.app.listen(this.port, () => {

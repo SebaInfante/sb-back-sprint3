@@ -12,6 +12,7 @@ import personRoutes from '../routes/person'
 import recordsRoutes from '../routes/records'
 import dashboardRoutes from '../routes/dashboard'
 import reportesRoutes from '../routes/reportes'
+import configRoutes from '../routes/config'
 
 
 class Server {
@@ -25,6 +26,7 @@ class Server {
     records : "/api/records",
     dashboard : "/api/dashboard",
     reportes : "/api/reportes",
+    config : "/api/config",
   };
 
   constructor() {
@@ -51,7 +53,14 @@ class Server {
     this.app.use(express.json()); //Habilita el uso del body y los transforma en json
     this.app.use(express.static('public')); // Habilita una pagina web
     this.app.use("/uploads", express.static(path.resolve("uploads"))); //?
+    this.app.use(function (req, res, next) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+      res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+      next();
+  });
   }
+
 
   routes(){
     this.app.use(this.apiPaths.auth, authRoutes) //Llamo a los rutas, en este caso el userRoutes
@@ -61,6 +70,7 @@ class Server {
     this.app.use(this.apiPaths.admin, adminRoutes) 
     this.app.use(this.apiPaths.dashboard, dashboardRoutes) 
     this.app.use(this.apiPaths.reportes, reportesRoutes) 
+    this.app.use(this.apiPaths.config, configRoutes) 
   }
 
   listen() { //Funcion con la cual inicio el server

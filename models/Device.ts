@@ -22,6 +22,10 @@ const Device = db.define<any>(
             type: DataTypes.STRING(24),
             allowNull: false,
         },
+        secret: {
+            type: DataTypes.STRING(64),
+            allowNull: false,
+        },
         name: {
             type: DataTypes.STRING(65),
             allowNull: true,

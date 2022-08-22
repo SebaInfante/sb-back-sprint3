@@ -23,6 +23,7 @@ const recordsToDay = async (req, res) => {
         const rut = req.body.rut || "";
         const intervalo = req.body.intervalo || 365;
         const initDate = req.body.fecha || (0, fecha_1.formatDate)(now);
+        const page = req.body.page || "";
         const fecha = new Date(initDate);
         const fechaActual = (0, fecha_1.sumarDias)(fecha, 1).split("T", 1).toString();
         const fechaAnterior = (0, fecha_1.restarDias)(fecha, intervalo).split("T", 1).toString();
@@ -64,10 +65,8 @@ const recordsToDay = async (req, res) => {
         });
         Pass_Records.map((pass) => {
             const urls = pass.dataValues.person_resource_url;
-            if (urls) {
+            if (urls)
                 pass.dataValues.resource_url = (0, s3_1.getUrlS3)(pass.dataValues.group_name, urls, pass.dataValues.person_no);
-                // pass.dataValues.resource_url = getUrlS3(pass.dataValues.group_name,  urls.split('/')[8], pass.dataValues.person_no)	//TODO Evaluar bien la ruta
-            }
             pass.dataValues.pass_img_url = (0, s3_1.getUrlS3PassRecord)(pass.dataValues.pass_img_url);
         });
         setTimeout(() => {
