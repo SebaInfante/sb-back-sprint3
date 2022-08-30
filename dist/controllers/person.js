@@ -287,6 +287,7 @@ const addPerson = async (req, res) => {
     const Employment_find = await Employment_1.default.findOne({ where: { id: employment } });
     (0, s3_1.putS3newPerson)(imagen, Employee_find.name, person_no, Filename);
     // const ArrDiviceKey = ['F4970C5C3419ACBC','EF38DD40511C2EB2', FBDAE5D85255288C];
+    console.log((0, fecha_1.formatDate)(fecha));
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
     var urlencodedAddPerson = new URLSearchParams();

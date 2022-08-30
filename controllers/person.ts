@@ -311,6 +311,9 @@ export const addPerson = async (req: Request, res: Response) => {
 
 	// const ArrDiviceKey = ['F4970C5C3419ACBC','EF38DD40511C2EB2', FBDAE5D85255288C];
 
+	console.log(formatDate(fecha));
+	
+
 	const myHeaders = new Headers();
 	myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 	
