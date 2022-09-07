@@ -3,6 +3,7 @@ import { encriptar } from "../lib/bcrypt";
 import { formatDate } from "../utils/fecha";
 import User from "../models/user";
 import Company from "../models/Company";
+const { Op } = require("sequelize");
 
 const fecha = new Date();
 
@@ -76,7 +77,7 @@ export const getemploxmandanteAdmin = async (req: Request, res: Response) => {
 export const createUser = async (req: Request, res: Response) => {
 	try {
 		const { name, email, password, role, employee = null, userAuth } = req.body;
-		const existsEmail = await User.findOne({ where: { email } }); //Buscar si existe un email
+		const existsEmail = await User.findOne({ where: { [Op.and]:[{email},{ deleted_flag:0 }] } }); //Buscar si existe un email
 		if (existsEmail) { return res.status(401).json({ msg: "Email already used" })}
 		
 		const hashPassword = await encriptar(password);

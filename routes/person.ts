@@ -28,6 +28,7 @@ import {
     downloadFicha,
     IdcardFront
 } from "../controllers/person";
+import { filtrarNomina } from "../controllers/reportes";
 import  storage  from "../lib/multer";
 
 import { validarCampos } from "../middlewares/validar-campos";
@@ -38,6 +39,8 @@ const router = Router();
 
 //TODO Obtengo primero 500 registros de las personas.
 router.post("/persons",           [validarJWT], getPersons);
+//TODO Obtengo primero 500 registros de las personas.
+router.post("/filtrarNomina",     [validarJWT], filtrarNomina);
 
 //TODO Obtengo las ocupaciones mediante el id.
 router.get("/employment/:id",     [validarJWT], getEmployment);

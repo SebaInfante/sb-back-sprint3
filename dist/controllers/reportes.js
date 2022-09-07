@@ -3,10 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calculoHora = exports.filtrarAsistencia = exports.asistencia = void 0;
+exports.calculoHora = exports.filtrarNomina = exports.filtrarAsistencia = exports.asistencia = void 0;
 const { Op, QueryTypes } = require("sequelize");
 const connectionResgisters_1 = __importDefault(require("../db/connectionResgisters"));
 const s3_1 = require("../lib/s3");
+const Person_1 = __importDefault(require("../models/Person"));
 const fecha_1 = require("../utils/fecha");
 const asistencia = async (req, res) => {
     const userAuth = req.body.userAuth;
@@ -82,6 +83,66 @@ const filtrarAsistencia = async (req, res) => {
     }
 };
 exports.filtrarAsistencia = filtrarAsistencia;
+const filtrarNomina = async (req, res) => {
+    try {
+        const userAuth = req.body.userAuth;
+        const name = req.body.name || "";
+        const rut = req.body.rut || "";
+        // const ocupacion = req.body.ocupacion || "";
+        const now = new Date();
+        const intervalo = req.body.intervalo || 365;
+        const initDate = req.body.fecha || (0, fecha_1.formatDate)(now);
+        const fecha = new Date(initDate);
+        const fechaActual = (0, fecha_1.sumarDias)(fecha, 1).split("T", 1).toString();
+        const fechaAnterior = (0, fecha_1.restarDias)(fecha, intervalo).split("T", 1).toString();
+        let contratista = req.body.contratista || "";
+        let employee;
+        if (contratista == "all") {
+            contratista = "";
+        }
+        if (userAuth.role === "USC") {
+            employee = userAuth.name;
+        }
+        else {
+            !contratista ? (employee = "") : (employee = contratista);
+        }
+        const Persons = await Person_1.default.findAll({
+            attributes: [
+                'id',
+                'email',
+                'person_name',
+                ['update_time', 'create_time'],
+                'status',
+                ['avatar_url', 'avatar'],
+                ['person_no', 'id_card'],
+                ['employee_name', 'empresa'],
+                ['employment_name', 'ocupacion']
+            ],
+            where: {
+                [Op.and]: [
+                    { person_name: { [Op.substring]: name } },
+                    { person_no: { [Op.substring]: rut } },
+                    { employee_name: { [Op.substring]: employee } },
+                    { deleted_flag: 0 },
+                    { update_time: { [Op.between]: [fechaAnterior, fechaActual] } }
+                ],
+            },
+            order: [
+                ['update_time', 'DESC']
+            ],
+            limit: 500
+        });
+        await Persons.map((Person) => {
+            Person.dataValues.URL = (0, s3_1.getUrlS3)(Person.dataValues.empresa, Person.dataValues.avatar, Person.dataValues.id_card);
+        });
+        return res.json(Persons);
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({ msg: "Contact the administrator" });
+    }
+};
+exports.filtrarNomina = filtrarNomina;
 const calculoHora = async (req, res) => {
     const userAuth = req.body.userAuth;
     let employee = '';

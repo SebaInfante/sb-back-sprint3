@@ -88,6 +88,110 @@ export const recordsToDay = async (req: Request, res: Response) => {
 // !                                                Genera reporte 10000 registros
 // ************************************************************************************************************************
 
+export const downloadReportNomina = async (req: Request, res: Response) => {
+
+	try {
+		const userAuth = req.body.userAuth;
+
+		const name = req.body.name || "";
+		const rut = req.body.rut || "";
+        
+		// const ocupacion = req.body.ocupacion || "";
+        const now = new Date();
+		const intervalo = req.body.intervalo || 365;
+		const initDate = req.body.fecha || formatDate(now)
+		const fecha = new Date(initDate);
+		const fechaActual = sumarDias(fecha, 1).split("T", 1).toString();
+		const fechaAnterior = restarDias(fecha, intervalo).split("T", 1).toString();
+
+		let contratista = req.body.contratista || "";
+		let employee;
+		if (contratista == "all") {contratista = ""}
+
+
+		if (userAuth.role === "USC") {
+			employee = userAuth.name;
+		} else {
+			!contratista ? (employee = "") : (employee = contratista);
+		}
+
+		const Persons = await Person.findAll(
+			{
+				attributes: [
+					'id', 
+					'email', 
+					'person_name', 
+					['update_time', 'create_time'],
+					'status',
+					['avatar_url', 'avatar'], 
+					['person_no','id_card'],
+					['employee_name','empresa'],
+					['employment_name', 'ocupacion']
+				],
+				where: {
+					[Op.and]: [
+						{person_name: {[Op.substring]: name}},
+						{person_no: {[Op.substring]: rut}},
+						{employee_name: {[Op.substring]: employee}},
+						{deleted_flag: 0},
+						{update_time: {[Op.between]: [fechaAnterior, fechaActual]}}
+					],
+				},
+				order: [
+					['update_time', 'DESC']],
+				limit: 500
+			}
+		);
+
+		const wb = new xl.Workbook();
+		const ws = wb.addWorksheet("Sheet 1");
+		const style = wb.createStyle({
+				font: {
+					color: "#095B90",
+					size: 12,
+				},
+				numberFormat: "$#,##0.00; ($#,##0.00); -",
+		});
+
+
+		ws.cell(1, 1).string("Fecha").style(style);
+		ws.cell(1, 2).string("Nombre").style(style);
+		ws.cell(1, 3).string("Rut").style(style);
+		ws.cell(1, 4).string("Avatar").style(style);
+
+		await Persons?.forEach((row: any, index) => {
+			ws.cell(index + 2, 1).date(new Date(row?.pass_create_time));
+			ws.cell(index + 2, 2).string(row?.person_name || "");
+			ws.cell(index + 2, 3).string(row?.person_no || "");
+			ws.cell(index + 2, 4).string(row?.person_resource_url || "");
+		});
+
+		const Filename = `${uuidv4()}.xlsx`;
+		const pathExcel = path.join(__dirname, "../..", "excel", Filename);
+
+		await wb.write(pathExcel, function (err: any, stats: any) {
+			if (err) {
+				console.log(err);
+			} else {
+				function downloadFile() {
+					res.download(pathExcel);
+					return res.status(200).json({ Filename: Filename, url: "http://localhost:8000/api/records/downreport"});
+			}
+			downloadFile();
+			return false;
+			}
+		});
+	} catch (error) {
+		console.log(error);
+		res.status(500).json({ msg: "Contact the administrator" });
+	}
+};
+
+
+// ************************************************************************************************************************
+// !                                                Genera reporte 10000 registros
+// ************************************************************************************************************************
+
 export const downloadReportRecords = async (req: Request, res: Response) => {
 
 	try {
@@ -194,6 +298,10 @@ export const downloadReportRecords = async (req: Request, res: Response) => {
 		res.status(500).json({ msg: "Contact the administrator" });
 	}
 };
+
+
+
+
 
 // ************************************************************************************************************************
 // !                                                Descarga del reporte excel

@@ -3,6 +3,7 @@ const { Op, QueryTypes } = require("sequelize");
 
 import db from "../db/connectionResgisters"
 import {  getUrlS3  } from "../lib/s3";
+import Person from "../models/Person";
 import { formatDate, restarDias, sumarDias } from "../utils/fecha";
 
 
@@ -87,6 +88,69 @@ export const filtrarAsistencia = async (req: Request, res: Response) => {
     }
 }
 
+export const filtrarNomina = async (req: Request, res: Response) => {
+	try {
+        const userAuth = req.body.userAuth;
+
+		const name = req.body.name || "";
+		const rut = req.body.rut || "";
+        
+		// const ocupacion = req.body.ocupacion || "";
+        const now = new Date();
+		const intervalo = req.body.intervalo || 365;
+		const initDate = req.body.fecha || formatDate(now)
+		const fecha = new Date(initDate);
+		const fechaActual = sumarDias(fecha, 1).split("T", 1).toString();
+		const fechaAnterior = restarDias(fecha, intervalo).split("T", 1).toString();
+
+		let contratista = req.body.contratista || "";
+		let employee;
+		if (contratista == "all") {contratista = ""}
+
+
+		if (userAuth.role === "USC") {
+			employee = userAuth.name;
+		} else {
+			!contratista ? (employee = "") : (employee = contratista);
+		}
+
+		const Persons = await Person.findAll(
+			{
+				attributes: [
+					'id', 
+					'email', 
+					'person_name', 
+					['update_time', 'create_time'],
+					'status',
+					['avatar_url', 'avatar'], 
+					['person_no','id_card'],
+					['employee_name','empresa'],
+					['employment_name', 'ocupacion']
+				],
+				where: {
+					[Op.and]: [
+						{person_name: {[Op.substring]: name}},
+						{person_no: {[Op.substring]: rut}},
+						{employee_name: {[Op.substring]: employee}},
+						{deleted_flag: 0},
+						{update_time: {[Op.between]: [fechaAnterior, fechaActual]}}
+					],
+				},
+				order: [
+					['update_time', 'DESC']],
+				limit: 500
+			}
+		);
+		await Persons.map((Person:any)=>{
+			Person.dataValues.URL = getUrlS3(Person.dataValues.empresa, Person.dataValues.avatar, Person.dataValues.id_card)
+		})
+		return res.json(Persons);
+	} catch (error) {
+		console.log(error);
+		return res.status(500).json({ msg: "Contact the administrator" });
+	}
+
+}
 
 export const calculoHora = async (req: Request, res: Response) => {
     const userAuth = req.body.userAuth;

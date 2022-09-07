@@ -570,9 +570,9 @@ export const deletePerson = async (req: Request, res: Response) => {
 			deleted_flag: 1
 		}
 
-		await Person.update(data, {where:{person_no}})
-		await Employee.update(data, {where:{person_no}})
-		await Docfile.update(data, {where:{person_no}})
+		await Person.update(data, { where:{ person_no }})
+		await Employee.update(data, { where:{ person_no }})
+		await Docfile.update(data, { where:{ person_no }})
 
 
 

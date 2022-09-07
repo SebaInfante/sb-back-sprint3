@@ -8,6 +8,7 @@ const bcrypt_1 = require("../lib/bcrypt");
 const fecha_1 = require("../utils/fecha");
 const user_1 = __importDefault(require("../models/user"));
 const Company_1 = __importDefault(require("../models/Company"));
+const { Op } = require("sequelize");
 const fecha = new Date();
 // ************************************************************************************************************************
 // !                                              VER USUARIO MANDANTE
@@ -79,7 +80,7 @@ exports.getemploxmandanteAdmin = getemploxmandanteAdmin;
 const createUser = async (req, res) => {
     try {
         const { name, email, password, role, employee = null, userAuth } = req.body;
-        const existsEmail = await user_1.default.findOne({ where: { email } }); //Buscar si existe un email
+        const existsEmail = await user_1.default.findOne({ where: { [Op.and]: [{ email }, { deleted_flag: 0 }] } }); //Buscar si existe un email
         if (existsEmail) {
             return res.status(401).json({ msg: "Email already used" });
         }

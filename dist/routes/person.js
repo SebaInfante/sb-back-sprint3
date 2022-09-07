@@ -11,6 +11,7 @@ const bstorage = (0, multer_1.default)({ storage: storageStrategy });
 // const idCardStorage = multer.diskStorage()
 const idCardStorage = (0, multer_1.default)({ dest: 'idCard' });
 const person_1 = require("../controllers/person");
+const reportes_1 = require("../controllers/reportes");
 const multer_2 = __importDefault(require("../lib/multer"));
 const validar_campos_1 = require("../middlewares/validar-campos");
 const validar_jwt_1 = require("../middlewares/validar-jwt");
@@ -18,6 +19,8 @@ const validar_role_1 = require("../middlewares/validar-role");
 const router = (0, express_1.Router)();
 //TODO Obtengo primero 500 registros de las personas.
 router.post("/persons", [validar_jwt_1.validarJWT], person_1.getPersons);
+//TODO Obtengo primero 500 registros de las personas.
+router.post("/filtrarNomina", [validar_jwt_1.validarJWT], reportes_1.filtrarNomina);
 //TODO Obtengo las ocupaciones mediante el id.
 router.get("/employment/:id", [validar_jwt_1.validarJWT], person_1.getEmployment);
 //TODO Actualizo los datos de las personas.
