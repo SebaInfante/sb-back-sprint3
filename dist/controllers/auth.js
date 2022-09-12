@@ -17,13 +17,16 @@ const login = async (req, res) => {
         const { email, password } = req.body;
         const user = await user_1.default.findOne({ where: { email } });
         if (!user) {
+            console.log("no esta el usuario");
             return res.status(400).json({ msg: "Username or password do not match" });
         }
         const validPassword = await (0, bcrypt_1.desencriptar)(password, user.password);
         if (!validPassword) {
+            console.log("contraseña mala");
             return res.status(400).json({ msg: "Username or password do not match" });
         }
         if (user.deleted_flag === 1) {
+            console.log("usuario eliminado");
             return res.status(400).json({ msg: "Suspended account. Contact the administrator" });
         }
         const token = await (0, jsonwebtoken_1.generarJWT)(user.id);

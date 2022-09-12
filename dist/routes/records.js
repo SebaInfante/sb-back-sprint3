@@ -8,6 +8,8 @@ const router = (0, express_1.Router)();
 router.post('/', [validar_jwt_1.validarJWT], records_1.recordsToDay);
 router.post('/report', [validar_jwt_1.validarJWT], records_1.downloadReportRecords);
 router.post('/reportNomina', [validar_jwt_1.validarJWT], records_1.downloadReportNomina);
+router.post('/reportAsistencia', [validar_jwt_1.validarJWT], records_1.downloadReportAsistencia);
+router.post('/downloadReportCalculoHora', [validar_jwt_1.validarJWT], records_1.downloadReportCalculoHora);
 router.get('/downreport/:resource_url', records_1.downReport);
 router.put('/editarPasada/:id', [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], records_1.updateRecord);
 router.delete("/deleteRecord/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], records_1.deleteRecord);
