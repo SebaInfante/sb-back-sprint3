@@ -14,6 +14,7 @@ const path_1 = __importDefault(require("path"));
 const now = new Date();
 const { Op, QueryTypes } = require("sequelize");
 const connectionResgisters_1 = __importDefault(require("../db/connectionResgisters"));
+const Company_1 = __importDefault(require("../models/Company"));
 // ************************************************************************************************************************
 // !                                                ULTIMAS 500 PASADAS / 2dias
 // ************************************************************************************************************************
@@ -42,7 +43,8 @@ const recordsToDay = async (req, res) => {
             temp = "";
         }
         if (userAuth.role === "USC") {
-            employee = userAuth.name;
+            let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+            employee = employment[0]?.name;
         }
         else {
             !contratista ? (employee = "") : (employee = contratista);
@@ -101,7 +103,8 @@ const downloadReportNomina = async (req, res) => {
             contratista = "";
         }
         if (userAuth.role === "USC") {
-            employee = userAuth.name;
+            let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+            employee = employment[0]?.name;
         }
         else {
             !contratista ? (employee = "") : (employee = contratista);
@@ -145,11 +148,13 @@ const downloadReportNomina = async (req, res) => {
         ws.cell(1, 2).string("Nombre").style(style);
         ws.cell(1, 3).string("Rut").style(style);
         ws.cell(1, 4).string("Avatar").style(style);
+        console.log(Persons);
         await Persons?.forEach((row, index) => {
-            ws.cell(index + 2, 1).date(new Date(row?.pass_create_time));
+            // ws.cell(index + 2, 1).string(row?.pass_create_time);
+            ws.cell(index + 2, 1).date(new Date(row?.create_time));
             ws.cell(index + 2, 2).string(row?.person_name || "");
-            ws.cell(index + 2, 3).string(row?.person_no || "");
-            ws.cell(index + 2, 4).string(row?.person_resource_url || "");
+            ws.cell(index + 2, 3).string(row?.id_card || row?.person_no || row?.person_id || "");
+            ws.cell(index + 2, 4).string(row?.avatar || "");
         });
         const Filename = `${(0, uuid_1.v4)()}.xlsx`;
         const pathExcel = path_1.default.join(__dirname, "../", "excel", Filename);
@@ -194,7 +199,8 @@ const downloadReportAsistencia = async (req, res) => {
             contratista = "";
         }
         if (userAuth.role === "USC") {
-            employee = userAuth.name;
+            let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+            employee = employment[0]?.name;
         }
         else {
             !contratista ? (employee = "") : (employee = contratista);
@@ -277,7 +283,8 @@ const downloadReportRecords = async (req, res) => {
             temp = "";
         }
         if (userAuth.role === "USC") {
-            employee = userAuth.name;
+            let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+            employee = employment[0]?.name;
         }
         else {
             !contratista ? (employee = "") : (employee = contratista);
@@ -384,7 +391,8 @@ const downloadReportCalculoHora = async (req, res) => {
             temp = "";
         }
         if (userAuth.role === "USC") {
-            employee = userAuth.name;
+            let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+            employee = employment[0]?.name;
         }
         else {
             !contratista ? (employee = "") : (employee = contratista);

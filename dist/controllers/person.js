@@ -44,7 +44,8 @@ const getPersons = async (req, res) => {
             turno = "";
         }
         if (userAuth.role === "USC") {
-            employee = userAuth.name;
+            let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+            employee = employment[0]?.name;
         }
         else {
             !contratista ? (employee = "") : (employee = contratista);
@@ -76,6 +77,7 @@ const getPersons = async (req, res) => {
             ],
             limit: 500
         });
+        console.log(Persons);
         await Persons.map((Person) => {
             Person.dataValues.URL = (0, s3_1.getUrlS3)(Person.dataValues.empresa, Person.dataValues.avatar, Person.dataValues.id_card);
         });
@@ -92,12 +94,15 @@ exports.getPersons = getPersons;
 // ************************************************************************************************************************
 const getEmployment = async (req, res) => {
     try {
-        let employment;
+        let employment = [];
         const id = req.params.id;
         const { userAuth } = req.body;
-        (userAuth.role === "USC")
-            ? employment = await Employment_1.default.findAll({ where: { [Op.and]: [{ employee: userAuth.id }, { deleted_flag: 0 }] } })
-            : employment = await Employment_1.default.findAll({ where: { [Op.and]: [{ employee: id }, { deleted_flag: 0 }] } });
+        if (userAuth.role === "USC") {
+            let usuario = await user_1.default.findOne({ where: { name: id } });
+            console.log("🚀 ~ file: person.ts ~ line 108 ~ getEmployment ~ usuario", usuario);
+            employment = await Employment_1.default.findAll({ where: { [Op.and]: [{ employee: usuario.employee }, { deleted_flag: 0 }] } });
+        }
+        let employmentss = await Employment_1.default.findAll({ where: { [Op.and]: [{ deleted_flag: 0 }] } });
         if (employment.length == 0) {
             employment = [{ id: 1, employment: "No seleccionado" }];
         }
@@ -279,7 +284,7 @@ const addPerson = async (req, res) => {
     const fecha = new Date();
     const gmt = process.env.GMT;
     fecha.setHours(fecha.getHours() - gmt);
-    const { person_no, name, gender, email, employee, employment, qr_url, userAuth } = req.body;
+    const { person_no, name, gender, email, employee, employment, userAuth, qr_url = "NotQR" } = req.body;
     const imagen = req.file;
     const Filename = `${(0, uuid_1.v4)()}.png`;
     const UsuarioExiste = await Person_1.default.findOne({ where: { person_no } });
@@ -328,7 +333,7 @@ const addPerson = async (req, res) => {
                 person_name: name,
                 gender,
                 email,
-                qr_url,
+                qr_url: "notQr",
                 employee_name: Employee_find.name,
                 employment_name: Employment_find.name,
                 status: 1,
@@ -359,7 +364,7 @@ const addPerson = async (req, res) => {
                 person_name: name,
                 gender,
                 email,
-                qr_url,
+                qr_url: "notQr",
                 employee_name: Employee_find.name,
                 employment_name: Employment_find.name,
                 avatar_url: Filename,
@@ -436,6 +441,7 @@ const photoPreview = async (req, res) => {
         // 		return body
         // 	});
         // }
+        return res.status(200).json();
     }
     catch (error) {
         console.log(error);
@@ -480,27 +486,26 @@ exports.docsFile = docsFile;
 // ************************************************************************************************************************
 const IdcardFront = async (req, res) => {
     try {
-        if (req.file) {
-            const request = require("request");
-            const fs = require("fs");
-            const docfile_url = `uploads/${req.file?.filename}`;
-            let url = path_1.default.join(__dirname, "../..", "uploads", req.file?.filename);
-            const options = {
-                method: 'POST',
-                url: "https://api.luxand.cloud/subject/v2",
-                qs: { "name": "", "store": "1" },
-                headers: { 'token': `${process.env.TOKEN_LUXAND}` },
-                formData: { photo: fs.createReadStream(url) }
-            };
-            request(options, function (error, response, body) {
-                if (error)
-                    throw new Error(error);
-                let id = JSON.parse(body);
-                fs.unlink(url, (err) => { if (err)
-                    throw err; console.log(url); });
-                return res.status(200).json({ id, docfile_url });
-            });
-        }
+        // if (req.file) {
+        // 	const request = require("request");
+        // 	const fs = require("fs");
+        // 	const docfile_url= `uploads/${req.file?.filename}`
+        // 	let url = path.join(__dirname, "../..", "uploads",req.file?.filename);
+        // 	const options = { 
+        // 		method: 'POST', 
+        // 		url: "https://api.luxand.cloud/subject/v2", 
+        // 		qs: {"name":"","store":"1"}, 
+        // 		headers: { 'token': `${process.env.TOKEN_LUXAND}` }, 
+        // 		formData: { photo: fs.createReadStream(url) }
+        // 	}
+        // 	request(options, function (error:any, response:any, body:any) { 
+        // 		if (error) throw new Error(error)
+        // 		let id = JSON.parse(body)
+        // 		fs.unlink(url, (err:any) => { if (err) throw err; console.log(url) });
+        // 		return res.status(200).json({id, docfile_url});
+        // 	});
+        // }
+        return res.status(200).json({});
     }
     catch (error) {
         console.log(error);
@@ -641,7 +646,8 @@ const downloadReportRecords = async (req, res) => {
             turno = "";
         }
         if (userAuth.role === "USC") {
-            employee = userAuth.name;
+            let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+            employee = employment[0]?.name;
         }
         else {
             !contratista ? (employee = "") : (employee = contratista);

@@ -15,6 +15,7 @@ const now = new Date();
 const { Op, QueryTypes } = require("sequelize");
 
 import db from "../db/connectionResgisters"
+import Company from "../models/Company";
 
 // ************************************************************************************************************************
 // !                                                ULTIMAS 500 PASADAS / 2dias
@@ -44,10 +45,12 @@ export const recordsToDay = async (req: Request, res: Response) => {
 		if (temp == "all") { temp = ""; }
 
 		if (userAuth.role === "USC") {
-			employee = userAuth.name;
+			let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+			employee = employment[0]?.name;
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
+
 
 		const Pass_Records = await Pass_Record.findAll(
 			{
@@ -110,10 +113,12 @@ export const downloadReportNomina = async (req: Request, res: Response) => {
 
 
 		if (userAuth.role === "USC") {
-			employee = userAuth.name;
+			let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+			employee = employment[0]?.name;
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
+
 
 		const Persons = await Person.findAll(
 			{
@@ -158,12 +163,14 @@ export const downloadReportNomina = async (req: Request, res: Response) => {
 		ws.cell(1, 2).string("Nombre").style(style);
 		ws.cell(1, 3).string("Rut").style(style);
 		ws.cell(1, 4).string("Avatar").style(style);
+console.log(Persons);
 
 		await Persons?.forEach((row: any, index) => {
-			ws.cell(index + 2, 1).date(new Date(row?.pass_create_time));
+			// ws.cell(index + 2, 1).string(row?.pass_create_time);
+			ws.cell(index + 2, 1).date(new Date(row?.create_time));
 			ws.cell(index + 2, 2).string(row?.person_name || "");
-			ws.cell(index + 2, 3).string(row?.person_no || "");
-			ws.cell(index + 2, 4).string(row?.person_resource_url || "");
+			ws.cell(index + 2, 3).string(row?.id_card || row?.person_no || row?.person_id || "");
+			ws.cell(index + 2, 4).string(row?.avatar || "");
 		});
 
 		const Filename = `${uuidv4()}.xlsx`;
@@ -212,10 +219,12 @@ export const downloadReportAsistencia = async (req: Request, res: Response) => {
 
 
 		if (userAuth.role === "USC") {
-			employee = userAuth.name;
+			let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+			employee = employment[0]?.name;
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
+
 
 
         const asistencia = await db.query(`
@@ -302,10 +311,12 @@ export const downloadReportRecords = async (req: Request, res: Response) => {
 		if (temp == "all") { temp = ""; }
 
 		if (userAuth.role === "USC") {
-			employee = userAuth.name;
+			let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+			employee = employment[0]?.name;
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
+
 
 		const Pass_Records = await Pass_Record.findAll(
 			{
@@ -415,10 +426,12 @@ export const downloadReportCalculoHora = async (req: Request, res: Response) => 
 		if (temp == "all") { temp = ""; }
 
 		if (userAuth.role === "USC") {
-			employee = userAuth.name;
+			let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+			employee = employment[0]?.name;
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
+
 
 
 
@@ -463,7 +476,7 @@ export const downloadReportCalculoHora = async (req: Request, res: Response) => 
             persona.URL = getUrlS3(persona.group_name, persona.person_resource_url, persona.person_no)
             i++
         })
-console.log(asistencia);
+		console.log(asistencia);
 
 
 

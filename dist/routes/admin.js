@@ -10,7 +10,7 @@ const router = (0, express_1.Router)();
 //TODO Agrega una nueva compañia.
 router.post("/addCompany", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.addCompany);
 //TODO Obtengo todas las compañia.
-router.get("/getAllCompany", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.getAllCompany);
+router.get("/getAllCompany", [validar_jwt_1.validarJWT], admin_1.getAllCompany);
 //TODO Obtengo toda la informacion de una compañia.
 router.get("/getCompany/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.getCompany);
 //TODO Obtengo todas los mandantes.
@@ -28,7 +28,7 @@ router.get("/getAllTurnos", [validar_jwt_1.validarJWT, validar_role_1.esAdminRol
 //TODO Obtengo todos los turnos
 router.get("/getTurno/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.getTurno);
 //TODO Obtengo todos los turnos
-router.get("/getEmployment/:id", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.getEmployment);
+router.get("/getEmployment/:id", [validar_jwt_1.validarJWT], admin_1.getEmployment);
 //TODO Obtengo todos los turnos
 router.get("/getAllEmployment", [validar_jwt_1.validarJWT, validar_role_1.esAdminRole], admin_1.getAllEmployment);
 //TODO Agrego una nueva ocupacion

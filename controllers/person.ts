@@ -50,7 +50,8 @@ export const getPersons = async (req: Request, res: Response) => {
 		if (turno == "all") {turno = ""}
 
 		if (userAuth.role === "USC") {
-			employee = userAuth.name;
+			let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+			employee = employment[0]?.name;
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
@@ -83,6 +84,8 @@ export const getPersons = async (req: Request, res: Response) => {
 				limit: 500
 			}
 		);
+		console.log(Persons);
+		
 		await Persons.map((Person:any)=>{
 			Person.dataValues.URL = getUrlS3(Person.dataValues.empresa, Person.dataValues.avatar, Person.dataValues.id_card)
 		})
@@ -99,13 +102,17 @@ export const getPersons = async (req: Request, res: Response) => {
 
 export const getEmployment = async (req: Request, res: Response) => {
 	try{
-		let employment
+		let employment = []
 		const id = req.params.id
 		const { userAuth } = req.body;
 
-		(userAuth.role === "USC") 
-			?	employment = await Employment.findAll({ where: {[Op.and]:[ { employee: userAuth.id }, {deleted_flag:0}] }  })
-			:	employment = await Employment.findAll({ where: {[Op.and]:[ { employee: id }, {deleted_flag:0}] }  })
+		if (userAuth.role === "USC") {
+			let usuario = await User.findOne({where:{name : id}})
+			console.log("🚀 ~ file: person.ts ~ line 108 ~ getEmployment ~ usuario", usuario)
+			employment = await Employment.findAll({ where: {[Op.and]:[ { employee: usuario.employee }, {deleted_flag:0}] }  })
+		}
+		
+		let employmentss = await Employment.findAll({ where: {[Op.and]:[  {deleted_flag:0}] }  })
 
 		if (employment.length == 0) {
 			employment 	= 	[{	id: 1, employment: "No seleccionado"}];
@@ -298,7 +305,7 @@ export const addPerson = async (req: Request, res: Response) => {
 	const gmt:any = process.env.GMT
 	fecha.setHours(fecha.getHours()-gmt)
 
-	const { person_no, name, gender, email, employee, employment, qr_url, userAuth } = req.body
+	const { person_no, name, gender, email, employee, employment,  userAuth, qr_url ="NotQR" } = req.body
 	const imagen:any = req.file;
 
 	const Filename = `${uuidv4()}.png`;
@@ -362,7 +369,7 @@ export const addPerson = async (req: Request, res: Response) => {
 				person_name:name,
 				gender,
 				email,
-				qr_url,
+				qr_url:"notQr",
 				employee_name : Employee_find.name,
 				employment_name : Employment_find.name,
 				status:1,
@@ -393,7 +400,7 @@ export const addPerson = async (req: Request, res: Response) => {
 				person_name:name,
 				gender,
 				email,
-				qr_url,
+				qr_url:"notQr",
 				employee_name : Employee_find.name,
 				employment_name : Employment_find.name,
 				avatar_url : Filename,
@@ -478,6 +485,7 @@ export const photoPreview = async (req: Request, res: Response) => {
 		// 	});
 		// }
 
+		return res.status(200).json();
 
 	} catch (error) {
 		console.log(error);
@@ -525,28 +533,28 @@ export const docsFile = async (req: Request, res: Response) => {
 
 export const IdcardFront = async (req: Request, res: Response) => {
 	try {
-		if (req.file) {
-			const request = require("request");
-			const fs = require("fs");
+		// if (req.file) {
+		// 	const request = require("request");
+		// 	const fs = require("fs");
 
-			const docfile_url= `uploads/${req.file?.filename}`
-			let url = path.join(__dirname, "../..", "uploads",req.file?.filename);
+		// 	const docfile_url= `uploads/${req.file?.filename}`
+		// 	let url = path.join(__dirname, "../..", "uploads",req.file?.filename);
 
-			const options = { 
-				method: 'POST', 
-				url: "https://api.luxand.cloud/subject/v2", 
-				qs: {"name":"","store":"1"}, 
-				headers: { 'token': `${process.env.TOKEN_LUXAND}` }, 
-				formData: { photo: fs.createReadStream(url) }
-			}
-			request(options, function (error:any, response:any, body:any) { 
-				if (error) throw new Error(error)
-				let id = JSON.parse(body)
-				fs.unlink(url, (err:any) => { if (err) throw err; console.log(url) });
-				return res.status(200).json({id, docfile_url});
-			});
-	
-		}
+		// 	const options = { 
+		// 		method: 'POST', 
+		// 		url: "https://api.luxand.cloud/subject/v2", 
+		// 		qs: {"name":"","store":"1"}, 
+		// 		headers: { 'token': `${process.env.TOKEN_LUXAND}` }, 
+		// 		formData: { photo: fs.createReadStream(url) }
+		// 	}
+		// 	request(options, function (error:any, response:any, body:any) { 
+		// 		if (error) throw new Error(error)
+		// 		let id = JSON.parse(body)
+		// 		fs.unlink(url, (err:any) => { if (err) throw err; console.log(url) });
+		// 		return res.status(200).json({id, docfile_url});
+		// 	});
+		// }
+		return res.status(200).json({});
 	} catch (error) {
 		console.log(error);
 		res.status(500).json({ msg: "Contact the administrator" });
@@ -708,12 +716,13 @@ export const downloadReportRecords = async (req: Request, res: Response) => {
 
 		if (contratista == "all") {contratista = ""}
 		if (turno == "all") {turno = ""}
-
 		if (userAuth.role === "USC") {
-			employee = userAuth.name;
+			let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+			employee = employment[0]?.name;
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
+
 
 		const Persons = await Person.findAll(
 			{

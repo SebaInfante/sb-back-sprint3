@@ -11,7 +11,7 @@ const router = Router();
 router.post("/addCompany",              [validarJWT, esAdminRole], addCompany);
 
 //TODO Obtengo todas las compañia.
-router.get("/getAllCompany",            [validarJWT, esAdminRole], getAllCompany);
+router.get("/getAllCompany",            [validarJWT], getAllCompany);
 
 //TODO Obtengo toda la informacion de una compañia.
 router.get("/getCompany/:id",            [validarJWT, esAdminRole], getCompany);
@@ -38,7 +38,7 @@ router.get("/getAllTurnos",       [validarJWT, esAdminRole], getAllTurnos);
 router.get("/getTurno/:id",       [validarJWT, esAdminRole], getTurno);
 
 //TODO Obtengo todos los turnos
-router.get("/getEmployment/:id",       [validarJWT, esAdminRole], getEmployment);
+router.get("/getEmployment/:id",       [validarJWT], getEmployment);
 
 //TODO Obtengo todos los turnos
 router.get("/getAllEmployment",       [validarJWT, esAdminRole], getAllEmployment);

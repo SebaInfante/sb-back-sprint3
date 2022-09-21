@@ -7,13 +7,20 @@ exports.calculoHora = exports.filtrarNomina = exports.filtrarAsistencia = export
 const { Op, QueryTypes } = require("sequelize");
 const connectionResgisters_1 = __importDefault(require("../db/connectionResgisters"));
 const s3_1 = require("../lib/s3");
+const Company_1 = __importDefault(require("../models/Company"));
 const Person_1 = __importDefault(require("../models/Person"));
 const fecha_1 = require("../utils/fecha");
 const asistencia = async (req, res) => {
     const userAuth = req.body.userAuth;
+    let contratista;
     let employee = '';
-    if (userAuth.role === "USC")
-        employee = userAuth.name;
+    if (userAuth.role === "USC") {
+        let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+        employee = employment[0]?.name;
+    }
+    else {
+        !contratista ? (employee = "") : (employee = contratista);
+    }
     try {
         const asistencia = await connectionResgisters_1.default.query(`
             SELECT MIN(app_pass_records.pass_time) AS time, CAST(pass_create_time AS DATE) AS fecha, person_resource_url, person_name, person_no , group_name, calculated_shift
@@ -53,8 +60,14 @@ const filtrarAsistencia = async (req, res) => {
     const fecha = new Date(initDate);
     const fechaActual = (0, fecha_1.sumarDias)(fecha, 1).split("T", 1).toString();
     const fechaAnterior = (0, fecha_1.restarDias)(fecha, intervalo).split("T", 1).toString();
-    if (userAuth.role === "USC")
-        employee = userAuth.name;
+    let contratista;
+    if (userAuth.role === "USC") {
+        let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+        employee = employment[0]?.name;
+    }
+    else {
+        !contratista ? (employee = "") : (employee = contratista);
+    }
     try {
         const asistencia = await connectionResgisters_1.default.query(`
             SELECT MIN(app_pass_records.pass_time) AS time, CAST(pass_create_time AS DATE) AS fecha, person_resource_url, person_name, person_no , group_name, calculated_shift
@@ -101,7 +114,8 @@ const filtrarNomina = async (req, res) => {
             contratista = "";
         }
         if (userAuth.role === "USC") {
-            employee = userAuth.name;
+            let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+            employee = employment[0]?.name;
         }
         else {
             !contratista ? (employee = "") : (employee = contratista);
@@ -154,8 +168,14 @@ const calculoHora = async (req, res) => {
     const fecha = new Date(initDate);
     const fechaActual = (0, fecha_1.sumarDias)(fecha, 1).split("T", 1).toString();
     const fechaAnterior = (0, fecha_1.restarDias)(fecha, intervalo).split("T", 1).toString();
-    if (userAuth.role === "USC")
-        employee = userAuth.name;
+    let contratista;
+    if (userAuth.role === "USC") {
+        let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
+        employee = employment[0]?.name;
+    }
+    else {
+        !contratista ? (employee = "") : (employee = contratista);
+    }
     try {
         const asistencia = await connectionResgisters_1.default.query(`
             SELECT MIN(app_pass_records.pass_time) AS entrada, MAX(app_pass_records.pass_time) AS salida, CAST(pass_create_time AS DATE) AS fecha, person_resource_url, person_name, person_no , group_name, calculated_shift

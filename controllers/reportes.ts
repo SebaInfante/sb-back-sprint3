@@ -3,14 +3,22 @@ const { Op, QueryTypes } = require("sequelize");
 
 import db from "../db/connectionResgisters"
 import {  getUrlS3  } from "../lib/s3";
+import Company from "../models/Company";
 import Person from "../models/Person";
 import { formatDate, restarDias, sumarDias } from "../utils/fecha";
 
 
 export const asistencia = async (req: Request, res: Response) => {
     const userAuth = req.body.userAuth;
+    let contratista
     let employee='';
-    if (userAuth.role === "USC")  employee = userAuth.name;
+    if (userAuth.role === "USC") {
+        let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+        employee = employment[0]?.name;
+    } else {
+        !contratista ? (employee = "") : (employee = contratista);
+    }
+
 
     try {
         const asistencia = await db.query(`
@@ -56,7 +64,14 @@ export const filtrarAsistencia = async (req: Request, res: Response) => {
     const fechaActual = sumarDias(fecha, 1).split("T", 1).toString();
     const fechaAnterior = restarDias(fecha, intervalo).split("T", 1).toString();
 
-    if (userAuth.role === "USC")  employee = userAuth.name;
+    let contratista
+    if (userAuth.role === "USC") {
+        let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+        employee = employment[0]?.name;
+    } else {
+        !contratista ? (employee = "") : (employee = contratista);
+    }
+
 
     try {
         const asistencia = await db.query(`
@@ -109,10 +124,12 @@ export const filtrarNomina = async (req: Request, res: Response) => {
 
 
 		if (userAuth.role === "USC") {
-			employee = userAuth.name;
+			let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+			employee = employment[0]?.name;
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
+
 
 		const Persons = await Person.findAll(
 			{
@@ -165,8 +182,16 @@ export const calculoHora = async (req: Request, res: Response) => {
     const fecha = new Date(initDate);
     const fechaActual = sumarDias(fecha, 1).split("T", 1).toString();
     const fechaAnterior = restarDias(fecha, intervalo).split("T", 1).toString();
+let contratista
 
-    if (userAuth.role === "USC")  employee = userAuth.name;
+
+    if (userAuth.role === "USC") {
+        let employment:any = await Company.findAll({ where: {[Op.and]:[ { id: userAuth.employee }, {deleted_flag:0}] }  })
+        employee = employment[0]?.name;
+    } else {
+        !contratista ? (employee = "") : (employee = contratista);
+    }
+
 
     try {
         const asistencia = await db.query(`
