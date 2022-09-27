@@ -160,17 +160,20 @@ export const downloadReportNomina = async (req: Request, res: Response) => {
 
 
 		ws.cell(1, 1).string("Fecha").style(style);
-		ws.cell(1, 2).string("Nombre").style(style);
-		ws.cell(1, 3).string("Rut").style(style);
-		ws.cell(1, 4).string("Avatar").style(style);
-console.log(Persons);
-
+		ws.cell(1, 2).string("Rut").style(style);
+		ws.cell(1, 3).string("Nombre").style(style);
+		ws.cell(1, 4).string("Empresa").style(style);
+		ws.cell(1, 5).string("Ocupacion").style(style);
+		ws.cell(1, 6).string("Avatar").style(style);
+		
 		await Persons?.forEach((row: any, index) => {
-			// ws.cell(index + 2, 1).string(row?.pass_create_time);
+			console.log(row.dataValues);
 			ws.cell(index + 2, 1).date(new Date(row?.create_time));
-			ws.cell(index + 2, 2).string(row?.person_name || "");
-			ws.cell(index + 2, 3).string(row?.id_card || row?.person_no || row?.person_id || "");
-			ws.cell(index + 2, 4).string(row?.avatar || "");
+			ws.cell(index + 2, 2).string(row?.dataValues.id_card || "");
+			ws.cell(index + 2, 3).string(row?.dataValues.person_name|| "");
+			ws.cell(index + 2, 4).string(row?.dataValues.empresa || "");
+			ws.cell(index + 2, 5).string(row?.dataValues.ocupacion || "");
+			ws.cell(index + 2, 6).string(row?.dataValues.avatar || "");
 		});
 
 		const Filename = `${uuidv4()}.xlsx`;

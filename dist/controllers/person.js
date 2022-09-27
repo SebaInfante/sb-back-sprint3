@@ -102,7 +102,9 @@ const getEmployment = async (req, res) => {
             console.log("🚀 ~ file: person.ts ~ line 108 ~ getEmployment ~ usuario", usuario);
             employment = await Employment_1.default.findAll({ where: { [Op.and]: [{ employee: usuario.employee }, { deleted_flag: 0 }] } });
         }
-        let employmentss = await Employment_1.default.findAll({ where: { [Op.and]: [{ deleted_flag: 0 }] } });
+        else {
+            employment = await Employment_1.default.findAll({ where: { [Op.and]: [{ employee: id }, { deleted_flag: 0 }] } });
+        }
         if (employment.length == 0) {
             employment = [{ id: 1, employment: "No seleccionado" }];
         }
