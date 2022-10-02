@@ -78,6 +78,10 @@ const filtrarAsistencia = async (req, res) => {
         `, { type: QueryTypes.SELECT });
         let i = 0;
         asistencia.forEach((persona) => {
+            persona.fecha = persona.fecha.replace('-', '/');
+            persona.fecha = persona.fecha.replace('-', '/');
+            let dateUp = new Date(persona.fecha);
+            persona.fecha = (0, fecha_1.sumarDias)(dateUp, 1).split("T", 1).toString();
             persona.id = i;
             persona.group_name = capitalizar(persona.group_name);
             function capitalizar(str) {
@@ -88,6 +92,7 @@ const filtrarAsistencia = async (req, res) => {
             persona.URL = (0, s3_1.getUrlS3)(persona.group_name, persona.person_resource_url, persona.person_no);
             i++;
         });
+        console.table(asistencia);
         return res.status(200).json(asistencia);
     }
     catch (error) {
@@ -186,6 +191,10 @@ const calculoHora = async (req, res) => {
         `, { type: QueryTypes.SELECT });
         let i = 0;
         asistencia.forEach((persona) => {
+            persona.fecha = persona.fecha.replace('-', '/');
+            persona.fecha = persona.fecha.replace('-', '/');
+            let dateUp = new Date(persona.fecha);
+            persona.fecha = (0, fecha_1.sumarDias)(dateUp, 1).split("T", 1).toString();
             persona.id = i;
             persona.group_name = capitalizar(persona.group_name);
             let segundos = (persona.salida - persona.entrada) / 1000;

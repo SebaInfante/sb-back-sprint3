@@ -194,7 +194,7 @@ const downloadReportAsistencia = async (req, res) => {
         const intervalo = req.body.intervalo || 365;
         const initDate = req.body.fecha || (0, fecha_1.formatDate)(now);
         const fecha = new Date(initDate);
-        const fechaActual = (0, fecha_1.sumarDias)(fecha, 1).split("T", 1).toString();
+        const fechaActual = (0, fecha_1.sumarDias)(fecha, 2).split("T", 1).toString();
         const fechaAnterior = (0, fecha_1.restarDias)(fecha, intervalo).split("T", 1).toString();
         let contratista = req.body.contratista || "";
         let employee;
@@ -208,6 +208,7 @@ const downloadReportAsistencia = async (req, res) => {
         else {
             !contratista ? (employee = "") : (employee = contratista);
         }
+        console.log(fechaActual);
         const asistencia = await connectionResgisters_1.default.query(`
             SELECT MIN(app_pass_records.pass_time) AS time, CAST(pass_create_time AS DATE) AS fecha, person_resource_url, person_name, person_no , group_name, calculated_shift
             FROM app_pass_records
@@ -231,6 +232,10 @@ const downloadReportAsistencia = async (req, res) => {
         ws.cell(1, 4).string("Rut").style(style);
         ws.cell(1, 5).string("Empresa").style(style);
         await asistencia?.forEach((row, index) => {
+            row.fecha = row.fecha.replace('-', '/');
+            row.fecha = row.fecha.replace('-', '/');
+            let dateUp = new Date(row.fecha);
+            row.fecha = (0, fecha_1.sumarDias)(dateUp, 1).split("T", 1).toString();
             ws.cell(index + 2, 1).date(new Date(row?.time) || "");
             ws.cell(index + 2, 2).string(row?.fecha || "");
             ws.cell(index + 2, 3).string(row?.person_name || "");
@@ -455,6 +460,10 @@ const downloadReportCalculoHora = async (req, res) => {
         ws.cell(1, 7).string("group_name").style(style);
         ws.cell(1, 8).string("calculated_shift").style(style);
         await asistencia?.forEach((row, index) => {
+            row.fecha = row.fecha.replace('-', '/');
+            row.fecha = row.fecha.replace('-', '/');
+            let dateUp = new Date(row.fecha);
+            row.fecha = (0, fecha_1.sumarDias)(dateUp, 1).split("T", 1).toString();
             ws.cell(index + 2, 1).date(new Date(row?.entrada) || "");
             ws.cell(index + 2, 2).date(new Date(row?.salida) || "");
             ws.cell(index + 2, 3).string(row?.calculo);
@@ -533,6 +542,8 @@ const updateRecord = async (req, res) => {
         const id = req.params.id;
         const person = await Person_1.default.findOne({ where: { person_no: req.body.person_id } });
         console.log("🚀 ~ file: records.ts ~ line 232 ~ updateRecord ~ person", person);
+        const company = await Company_1.default.findOne({ where: { name: person.employee_name } });
+        console.log("🚀 ~ file: records.ts ~ line 607 ~ updateRecord ~ company", company);
         const data = {
             pass_direction: req.body.turno,
             person_no: person.person_no,
@@ -540,6 +551,8 @@ const updateRecord = async (req, res) => {
             person_resource_url: person.avatar_url,
             pass_update_time: (0, fecha_1.formatDate)(now),
             pass_update_user: req.body.userAuth.name,
+            group_name: person.employee_name,
+            group_id: company.id
         };
         await Pass_Record_1.default.update(data, { where: { id } });
         return res.status(200).json({ msg: "Archivo Actualizado correctamente" });

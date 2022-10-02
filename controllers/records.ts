@@ -213,7 +213,7 @@ export const downloadReportAsistencia = async (req: Request, res: Response) => {
 		const intervalo = req.body.intervalo || 365;
 		const initDate = req.body.fecha || formatDate(now)
 		const fecha = new Date(initDate);
-		const fechaActual = sumarDias(fecha, 1).split("T", 1).toString();
+		const fechaActual = sumarDias(fecha, 2).split("T", 1).toString();
 		const fechaAnterior = restarDias(fecha, intervalo).split("T", 1).toString();
 
 		let contratista = req.body.contratista || "";
@@ -229,7 +229,8 @@ export const downloadReportAsistencia = async (req: Request, res: Response) => {
 		}
 
 
-
+		console.log(fechaActual);
+		
         const asistencia = await db.query(`
             SELECT MIN(app_pass_records.pass_time) AS time, CAST(pass_create_time AS DATE) AS fecha, person_resource_url, person_name, person_no , group_name, calculated_shift
             FROM app_pass_records
@@ -258,6 +259,11 @@ export const downloadReportAsistencia = async (req: Request, res: Response) => {
 		ws.cell(1, 5).string("Empresa").style(style);
 
 		await asistencia?.forEach((row: any, index) => {
+			row.fecha = row.fecha.replace('-', '/')
+            row.fecha = row.fecha.replace('-', '/')
+            let dateUp =  new Date ( row.fecha)
+            row.fecha = sumarDias(dateUp, 1).split("T", 1).toString()
+
 			ws.cell(index + 2, 1).date(new Date(row?.time) || "");
 			ws.cell(index + 2, 2).string(row?.fecha || "");
 			ws.cell(index + 2, 3).string(row?.person_name || "");
@@ -504,6 +510,12 @@ export const downloadReportCalculoHora = async (req: Request, res: Response) => 
 
 
 		await asistencia?.forEach((row: any, index) => {
+
+			row.fecha = row.fecha.replace('-', '/')
+            row.fecha = row.fecha.replace('-', '/')
+            let dateUp =  new Date ( row.fecha)
+            row.fecha = sumarDias(dateUp, 1).split("T", 1).toString()
+
 			ws.cell(index + 2, 1).date(new Date(row?.entrada) || "");
 			ws.cell(index + 2, 2).date(new Date(row?.salida) || "");
 			ws.cell(index + 2, 3).string(row?.calculo);
@@ -591,6 +603,9 @@ export const updateRecord = async (req: Request, res: Response) => {
 		const person = await Person.findOne({ where: { person_no: req.body.person_id } });
         console.log("🚀 ~ file: records.ts ~ line 232 ~ updateRecord ~ person", person)
 
+		const company = await Company.findOne({where: { name : person.employee_name }})
+		console.log("🚀 ~ file: records.ts ~ line 607 ~ updateRecord ~ company", company)
+
 		const data = {
 			pass_direction		: req.body.turno,
 			person_no			: person.person_no,
@@ -598,6 +613,8 @@ export const updateRecord = async (req: Request, res: Response) => {
 			person_resource_url	: person.avatar_url,
 			pass_update_time	: formatDate(now),
 			pass_update_user	: req.body.userAuth.name,
+			group_name			: person.employee_name,
+			group_id			: company.id
 		}
 
 		await Pass_Record.update(data, {where:{id}})

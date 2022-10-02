@@ -72,7 +72,6 @@ export const filtrarAsistencia = async (req: Request, res: Response) => {
         !contratista ? (employee = "") : (employee = contratista);
     }
 
-
     try {
         const asistencia = await db.query(`
             SELECT MIN(app_pass_records.pass_time) AS time, CAST(pass_create_time AS DATE) AS fecha, person_resource_url, person_name, person_no , group_name, calculated_shift
@@ -83,6 +82,11 @@ export const filtrarAsistencia = async (req: Request, res: Response) => {
         `, { type: QueryTypes.SELECT });
         let i = 0
         asistencia.forEach((persona:any) =>{
+            persona.fecha = persona.fecha.replace('-', '/')
+            persona.fecha = persona.fecha.replace('-', '/')
+            let dateUp =  new Date ( persona.fecha)
+            persona.fecha = sumarDias(dateUp, 1).split("T", 1).toString()
+
             persona.id = i
             persona.group_name = capitalizar(persona.group_name)
 
@@ -95,6 +99,7 @@ export const filtrarAsistencia = async (req: Request, res: Response) => {
             persona.URL = getUrlS3(persona.group_name, persona.person_resource_url, persona.person_no)
             i++
         })
+        console.table(asistencia)
 
         return res.status(200).json(asistencia);
     } catch (error) {
@@ -203,6 +208,11 @@ let contratista
         `, { type: QueryTypes.SELECT });
         let i = 0
         asistencia.forEach((persona:any) =>{
+            persona.fecha = persona.fecha.replace('-', '/')
+            persona.fecha = persona.fecha.replace('-', '/')
+            let dateUp =  new Date ( persona.fecha)
+            persona.fecha = sumarDias(dateUp, 1).split("T", 1).toString()
+
             persona.id = i
             persona.group_name = capitalizar(persona.group_name)
             let segundos = (persona.salida - persona.entrada)/1000

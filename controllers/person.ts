@@ -318,53 +318,59 @@ export const addPerson = async (req: Request, res: Response) => {
 	
 	putS3newPerson(imagen,Employee_find.name,person_no, Filename)
 
-	// const ArrDiviceKey = ['F4970C5C3419ACBC','EF38DD40511C2EB2', FBDAE5D85255288C];
+	// const ArrDiviceKey = ['F4970C5C3419ACBC','EF38DD40511C2EB2', 'FBDAE5D85255288C', 'EF8518B740271A7B'];
 
 	console.log(formatDate(fecha));
 	
+	// ArrDiviceKey.forEach(camara =>{
+	// 	console.log(camara);
 
-	const myHeaders = new Headers();
-	myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-	
-	var urlencodedAddPerson = new URLSearchParams();
-	
-	urlencodedAddPerson.append("deviceKey", "FBDAE5D85255288C");
-	urlencodedAddPerson.append("secret", "tdx");
-	urlencodedAddPerson.append("id", person_no);
-	urlencodedAddPerson.append("name", name);
-	urlencodedAddPerson.append("idcardNum", qr_url);
-	urlencodedAddPerson.append("expireTime", "");
-	urlencodedAddPerson.append("blacklist", "");
-	urlencodedAddPerson.append("vaccination", "");
-	urlencodedAddPerson.append("vaccinationTime", "");
-	urlencodedAddPerson.append("remark", "El Big Boss");
-	
-	const requestOptionsAddPerson:any = {
-		method: 'POST',
-		headers: myHeaders,
-		body: urlencodedAddPerson,
-		redirect: 'follow'
-	};
-
-	fetch("http://154.53.37.187:8190/api/person/add", requestOptionsAddPerson).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));
-
-// **********************
-		var urlencodedAddFace = new URLSearchParams();
-		urlencodedAddFace.append("deviceKey", "FBDAE5D85255288C");
-		urlencodedAddFace.append("secret", "tdx");
-		urlencodedAddFace.append("personId", person_no);
-		urlencodedAddFace.append("faceId", "");
-		urlencodedAddFace.append("imgBase64", Buffer.from(imagen?.buffer).toString('base64'));
+	// 	const myHeaders = new Headers();
+	// 	myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 		
-		const requestOptionsAddFace:any = {
-			method: 'POST',
-			headers: myHeaders,
-			body: urlencodedAddFace,
-			redirect: 'follow'
-		};
+	// 	var urlencodedAddPerson = new URLSearchParams();
+		
+	// 	urlencodedAddPerson.append("deviceKey", camara);
+	// 	urlencodedAddPerson.append("secret", "tdx");
+	// 	urlencodedAddPerson.append("id", person_no);
+	// 	urlencodedAddPerson.append("name", name);
+	// 	urlencodedAddPerson.append("idcardNum", qr_url);
+	// 	urlencodedAddPerson.append("expireTime", "");
+	// 	urlencodedAddPerson.append("blacklist", "");
+	// 	urlencodedAddPerson.append("vaccination", "");
+	// 	urlencodedAddPerson.append("vaccinationTime", "");
+	// 	urlencodedAddPerson.append("remark", "El Big Boss");
+		
+	// 	const requestOptionsAddPerson:any = {
+	// 		method: 'POST',
+	// 		headers: myHeaders,
+	// 		body: urlencodedAddPerson,
+	// 		redirect: 'follow'
+	// 	};
+	
+	// 	fetch("http://154.53.37.187:8190/api/person/add", requestOptionsAddPerson).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));
+	
+	// // **********************
+	// 	var urlencodedAddFace = new URLSearchParams();
+	// 	urlencodedAddFace.append("deviceKey", camara);
+	// 	urlencodedAddFace.append("secret", "tdx");
+	// 	urlencodedAddFace.append("personId", person_no);
+	// 	urlencodedAddFace.append("faceId", "");
+	// 	urlencodedAddFace.append("imgBase64", Buffer.from(imagen?.buffer).toString('base64'));
+		
+	// 	const requestOptionsAddFace:any = {
+	// 		method: 'POST',
+	// 		headers: myHeaders,
+	// 		body: urlencodedAddFace,
+	// 		redirect: 'follow'
+	// 	};
+	
+	// 	fetch("http://154.53.37.187:8190/api/face/add", requestOptionsAddFace).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));
+	
 
-		fetch("http://154.53.37.187:8190/api/face/add", requestOptionsAddFace).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));
+	// })
 
+	
 	try {
 		if(UsuarioExiste){
 			const updatePerson = {
@@ -584,24 +590,30 @@ export const deletePerson = async (req: Request, res: Response) => {
 		await Employee.update(data, { where:{ person_no }})
 		await Docfile.update(data, { where:{ person_no }})
 
+		// const ArrDiviceKey = ['F4970C5C3419ACBC','EF38DD40511C2EB2', 'FBDAE5D85255288C', 'EF8518B740271A7B'];
 
+		// ArrDiviceKey.forEach(camara=>{
 
-		var myHeaders = new Headers();
-		myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+		// 	var myHeaders = new Headers();
+		// 	myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+	
+		// 	var urlencoded = new URLSearchParams();
+		// 	urlencoded.append("deviceKey", camara);
+		// 	urlencoded.append("secret", "tdx");
+		// 	urlencoded.append("personId", person_no);
+	
+		// 	var requestOptions:any = {
+		// 		method: 'POST',
+		// 		headers: myHeaders,
+		// 		body: urlencoded,
+		// 		redirect: 'follow'
+		// 	};
+	
+		// 	fetch("http://154.53.37.187:8190/api/person/del", requestOptions).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));
+	
+	
+		// })
 
-		var urlencoded = new URLSearchParams();
-		urlencoded.append("deviceKey", "FBDAE5D85255288C");
-		urlencoded.append("secret", "tdx");
-		urlencoded.append("personId", person_no);
-
-		var requestOptions:any = {
-			method: 'POST',
-			headers: myHeaders,
-			body: urlencoded,
-			redirect: 'follow'
-		};
-
-		fetch("http://154.53.37.187:8190/api/person/del", requestOptions).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));
 
 		return res.status(200).json({ msg: "Usuario Eliminado correctamente"});
 	} catch (error) {
@@ -682,11 +694,6 @@ export const sendEmailDeletePerson = async (req: Request, res: Response) => {
 				res.status(200).json(req.body);
 			}
 		});
-
-
-
-
-
 
 		return res.status(200).json({ mensaje: "Se envió un correo de recuperación", estado: "ok" });
 	} catch (error) {
