@@ -1,5 +1,6 @@
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 import Server from "./models/server";
+import dotenv from 'dotenv'
 
 dotenv.config(); //Habilito el dotenv en la app
 

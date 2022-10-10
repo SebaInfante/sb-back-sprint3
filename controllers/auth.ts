@@ -12,6 +12,7 @@ import User from "../models/user";
 // ************************************************************************************************************************
 // !                                                     LOGIN
 // ************************************************************************************************************************
+
 export const login = async (req: Request, res: Response) => {
 	try {
 		const { email, password } = req.body;
@@ -36,7 +37,7 @@ export const login = async (req: Request, res: Response) => {
 		}
 
 		const token = await generarJWT(user.id);
-		res.json({ user, token });
+		res.status(200).json({ user, token });
 	} catch (error) {
 		console.log(error);
 		return res.status(500).json({ msg: "Contact the administrator" });

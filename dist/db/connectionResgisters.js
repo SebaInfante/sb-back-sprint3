@@ -12,13 +12,6 @@ const db = new sequelize_1.Sequelize(name, user, pass, {
     // dialect: "mysql",
     dialect: "mssql",
     logging: false,
-    // pool: {
-    //     max: 15,
-    //     min: 5,
-    //     idle: 20000,
-    //     evict: 15000,
-    //     acquire: 30000
-    // },
 });
 exports.default = db;
 //# sourceMappingURL=connectionResgisters.js.map

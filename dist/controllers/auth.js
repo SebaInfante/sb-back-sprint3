@@ -30,7 +30,7 @@ const login = async (req, res) => {
             return res.status(400).json({ msg: "Suspended account. Contact the administrator" });
         }
         const token = await (0, jsonwebtoken_1.generarJWT)(user.id);
-        res.json({ user, token });
+        res.status(200).json({ user, token });
     }
     catch (error) {
         console.log(error);

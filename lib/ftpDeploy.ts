@@ -21,8 +21,3 @@ export const ftpDeploy = async (remoteRoot: String, include: String, localRoot:s
         .then((res: any) => console.log("finished:", res))
         .catch((err: any) => console.log("Error ", err));
 };
-
-
-
-
-

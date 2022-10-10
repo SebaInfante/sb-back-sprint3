@@ -1,7 +1,4 @@
 import { Response, Request } from "express";
-import path from "path";
-
-const now = new Date();
 const { Op, QueryTypes } = require("sequelize");
 
 import db from "../db/connectionResgisters"
@@ -30,7 +27,7 @@ export const pasadasDash = async (req: Request, res: Response) => {
 		}
 		
 		const fecha = new Date();
-		fecha.setHours(fecha.getHours() - 4);
+		// fecha.setHours(fecha.getHours() - 4);
 
         console.log("🚀 ~ file: records.ts ~ line 43 ~ pasadasDash ~ fecha", fecha)
 		
@@ -39,18 +36,25 @@ export const pasadasDash = async (req: Request, res: Response) => {
 		const nombreEmpresas = await db.query(`select group_name AS empresa from app_pass_records where  deleted_flag = 0 group by group_name`, { type: QueryTypes.SELECT });
 
 		const menos0 = restarDias(fecha, 0).split("T", 1).toString();
+		console.log("🚀 ~ file: dashboard.ts ~ line 42 ~ pasadasDash ~ menos0", menos0)
 		const nombre0 = diaNombre[fecha.getDay()]
 		const menos1 = restarDias(fecha, 1).split("T", 1).toString();
+		console.log("🚀 ~ file: dashboard.ts ~ line 44 ~ pasadasDash ~ menos1", menos1)
 		const nombre1 = diaNombre[fecha.getDay()]
 		const menos2 = restarDias(fecha, 1).split("T", 1).toString();
+		console.log("🚀 ~ file: dashboard.ts ~ line 46 ~ pasadasDash ~ menos2", menos2)
 		const nombre2 = diaNombre[fecha.getDay()]
 		const menos3 = restarDias(fecha, 1).split("T", 1).toString();
+		console.log("🚀 ~ file: dashboard.ts ~ line 48 ~ pasadasDash ~ menos3", menos3)
 		const nombre3 = diaNombre[fecha.getDay()]
 		const menos4 = restarDias(fecha, 1).split("T", 1).toString();
+		console.log("🚀 ~ file: dashboard.ts ~ line 50 ~ pasadasDash ~ menos4", menos4)
 		const nombre4 = diaNombre[fecha.getDay()]
 		const menos5 = restarDias(fecha, 1).split("T", 1).toString();
+		console.log("🚀 ~ file: dashboard.ts ~ line 52 ~ pasadasDash ~ menos5", menos5)
 		const nombre5 = diaNombre[fecha.getDay()]
 		const menos6 = restarDias(fecha, 1).split("T", 1).toString();
+		console.log("🚀 ~ file: dashboard.ts ~ line 54 ~ pasadasDash ~ menos6", menos6)
 		const nombre6 = diaNombre[fecha.getDay()]
 
 		const dias = [menos0,menos1,menos2,menos3,menos4,menos5,menos6]

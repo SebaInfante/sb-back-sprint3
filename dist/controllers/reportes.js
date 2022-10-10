@@ -11,7 +11,13 @@ const Company_1 = __importDefault(require("../models/Company"));
 const Person_1 = __importDefault(require("../models/Person"));
 const fecha_1 = require("../utils/fecha");
 const asistencia = async (req, res) => {
+    let now = new Date();
     const userAuth = req.body.userAuth;
+    const rut = req.body.rut || "";
+    const intervalo = req.body.intervalo || 365;
+    console.log("🚀 ~ file: reportes.ts ~ line 15 ~ asistencia ~ intervalo", intervalo);
+    const initDate = req.body.fecha || (0, fecha_1.formatDate)(now);
+    console.log("🚀 ~ file: reportes.ts ~ line 17 ~ asistencia ~ initDate", initDate);
     let contratista;
     let employee = '';
     if (userAuth.role === "USC") {
@@ -31,6 +37,10 @@ const asistencia = async (req, res) => {
         `, { type: QueryTypes.SELECT });
         let i = 0;
         asistencia.forEach((persona) => {
+            persona.fecha = persona.fecha.replace('-', '/');
+            persona.fecha = persona.fecha.replace('-', '/');
+            let dateUp = new Date(persona.fecha);
+            persona.fecha = (0, fecha_1.sumarDias)(dateUp, 1).split("T", 1).toString();
             persona.id = i;
             persona.group_name = capitalizar(persona.group_name);
             function capitalizar(str) {
@@ -58,8 +68,6 @@ const filtrarAsistencia = async (req, res) => {
     const intervalo = req.body.intervalo || 365;
     const initDate = req.body.fecha || (0, fecha_1.formatDate)(now);
     const fecha = new Date(initDate);
-    const fechaActual = (0, fecha_1.sumarDias)(fecha, 1).split("T", 1).toString();
-    const fechaAnterior = (0, fecha_1.restarDias)(fecha, intervalo).split("T", 1).toString();
     let contratista;
     if (userAuth.role === "USC") {
         let employment = await Company_1.default.findAll({ where: { [Op.and]: [{ id: userAuth.employee }, { deleted_flag: 0 }] } });
@@ -68,14 +76,31 @@ const filtrarAsistencia = async (req, res) => {
     else {
         !contratista ? (employee = "") : (employee = contratista);
     }
+    let fechaActual;
+    let fechaAnterior;
+    let asistencia;
     try {
-        const asistencia = await connectionResgisters_1.default.query(`
+        if (intervalo == -1) {
+            fechaActual = (0, fecha_1.sumarDias)(fecha, -1).split("T", 1).toString();
+            asistencia = await connectionResgisters_1.default.query(`
+            SELECT MIN(app_pass_records.pass_time) AS time, CAST(pass_create_time AS DATE) AS fecha, person_resource_url, person_name, person_no , group_name, calculated_shift
+            FROM app_pass_records
+            WHERE pass_direction = 1 AND person_no like '%${rut}%' AND person_name like '%${name}%' AND group_name like '%${employee}%' AND  pass_create_time like '%${fechaActual}%'
+            GROUP BY person_no,person_resource_url, person_name, person_no , group_name, calculated_shift, CAST(pass_create_time AS DATE)
+            ORDER BY  CAST(pass_create_time AS DATE) DESC
+            `, { type: QueryTypes.SELECT });
+        }
+        else {
+            fechaActual = (0, fecha_1.sumarDias)(fecha, 0);
+            fechaAnterior = (0, fecha_1.restarDias)(fecha, intervalo + 1);
+            asistencia = await connectionResgisters_1.default.query(`
             SELECT MIN(app_pass_records.pass_time) AS time, CAST(pass_create_time AS DATE) AS fecha, person_resource_url, person_name, person_no , group_name, calculated_shift
             FROM app_pass_records
             WHERE pass_direction = 1 AND person_no like '%${rut}%' AND person_name like '%${name}%' AND group_name like '%${employee}%' AND  pass_create_time BETWEEN '${fechaAnterior}' AND '${fechaActual}'
             GROUP BY person_no,person_resource_url, person_name, person_no , group_name, calculated_shift, CAST(pass_create_time AS DATE)
             ORDER BY  CAST(pass_create_time AS DATE) DESC
-        `, { type: QueryTypes.SELECT });
+            `, { type: QueryTypes.SELECT });
+        }
         let i = 0;
         asistencia.forEach((persona) => {
             persona.fecha = persona.fecha.replace('-', '/');
@@ -92,7 +117,6 @@ const filtrarAsistencia = async (req, res) => {
             persona.URL = (0, s3_1.getUrlS3)(persona.group_name, persona.person_resource_url, persona.person_no);
             i++;
         });
-        console.table(asistencia);
         return res.status(200).json(asistencia);
     }
     catch (error) {
@@ -110,9 +134,6 @@ const filtrarNomina = async (req, res) => {
         const now = new Date();
         const intervalo = req.body.intervalo || 365;
         const initDate = req.body.fecha || (0, fecha_1.formatDate)(now);
-        const fecha = new Date(initDate);
-        const fechaActual = (0, fecha_1.sumarDias)(fecha, 1).split("T", 1).toString();
-        const fechaAnterior = (0, fecha_1.restarDias)(fecha, intervalo).split("T", 1).toString();
         let contratista = req.body.contratista || "";
         let employee;
         if (contratista == "all") {
@@ -125,32 +146,69 @@ const filtrarNomina = async (req, res) => {
         else {
             !contratista ? (employee = "") : (employee = contratista);
         }
-        const Persons = await Person_1.default.findAll({
-            attributes: [
-                'id',
-                'email',
-                'person_name',
-                ['update_time', 'create_time'],
-                'status',
-                ['avatar_url', 'avatar'],
-                ['person_no', 'id_card'],
-                ['employee_name', 'empresa'],
-                ['employment_name', 'ocupacion']
-            ],
-            where: {
-                [Op.and]: [
-                    { person_name: { [Op.substring]: name } },
-                    { person_no: { [Op.substring]: rut } },
-                    { employee_name: { [Op.substring]: employee } },
-                    { deleted_flag: 0 },
-                    { update_time: { [Op.between]: [fechaAnterior, fechaActual] } }
+        let Persons;
+        const fecha = new Date(initDate);
+        let fechaActual;
+        let fechaAnterior;
+        if (intervalo == -1) {
+            fechaActual = (0, fecha_1.sumarDias)(fecha, -1).split("T", 1).toString();
+            Persons = await Person_1.default.findAll({
+                attributes: [
+                    'id',
+                    'email',
+                    'person_name',
+                    ['update_time', 'create_time'],
+                    'status',
+                    ['avatar_url', 'avatar'],
+                    ['person_no', 'id_card'],
+                    ['employee_name', 'empresa'],
+                    ['employment_name', 'ocupacion']
                 ],
-            },
-            order: [
-                ['update_time', 'DESC']
-            ],
-            limit: 500
-        });
+                where: {
+                    [Op.and]: [
+                        { person_name: { [Op.substring]: name } },
+                        { person_no: { [Op.substring]: rut } },
+                        { employee_name: { [Op.substring]: employee } },
+                        { deleted_flag: 0 },
+                        { update_time: { [Op.substring]: fechaAnterior } }
+                    ],
+                },
+                order: [
+                    ['update_time', 'DESC']
+                ],
+                limit: 5000
+            });
+        }
+        else {
+            fechaActual = (0, fecha_1.sumarDias)(fecha, 0);
+            fechaAnterior = (0, fecha_1.restarDias)(fecha, intervalo + 1);
+            Persons = await Person_1.default.findAll({
+                attributes: [
+                    'id',
+                    'email',
+                    'person_name',
+                    ['update_time', 'create_time'],
+                    'status',
+                    ['avatar_url', 'avatar'],
+                    ['person_no', 'id_card'],
+                    ['employee_name', 'empresa'],
+                    ['employment_name', 'ocupacion']
+                ],
+                where: {
+                    [Op.and]: [
+                        { person_name: { [Op.substring]: name } },
+                        { person_no: { [Op.substring]: rut } },
+                        { employee_name: { [Op.substring]: employee } },
+                        { deleted_flag: 0 },
+                        { update_time: { [Op.between]: [fechaAnterior, fechaActual] } }
+                    ],
+                },
+                order: [
+                    ['update_time', 'DESC']
+                ],
+                limit: 5000
+            });
+        }
         await Persons.map((Person) => {
             Person.dataValues.URL = (0, s3_1.getUrlS3)(Person.dataValues.empresa, Person.dataValues.avatar, Person.dataValues.id_card);
         });

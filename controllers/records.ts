@@ -31,9 +31,6 @@ export const recordsToDay = async (req: Request, res: Response) => {
 
 		const page = req.body.page || ""
 
-		const fecha = new Date(initDate);
-		const fechaActual = sumarDias(fecha, 1).split("T", 1).toString();
-		const fechaAnterior = restarDias(fecha, intervalo).split("T", 1).toString();
 
 		let employee;
 		let temp = req.body.temp || "";
@@ -50,26 +47,56 @@ export const recordsToDay = async (req: Request, res: Response) => {
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
+		let Pass_Records!:any
 
+		const fecha = new Date(initDate);
+		let fechaActual
+		let fechaAnterior
+		
 
-		const Pass_Records = await Pass_Record.findAll(
-			{
-				where: {
-					[Op.and]: [
-						{deleted_flag			: 0},
-						{pass_direction			: {[Op.substring]: turno}},
-						{pass_temperature_state	: {[Op.substring]: temp}},
-						{person_name			: {[Op.substring]: name}},
-						{person_no				: {[Op.substring]: rut}},
-						{group_name				: {[Op.substring]: employee}},
-						{pass_create_time		: {[Op.between]: [fechaAnterior, fechaActual]}}
-					],
-				},
-				order: [
-					['pass_create_time', 'DESC']],
-				limit: 500
-			}
-		);
+		if(intervalo == -1){
+			fechaActual = sumarDias(fecha, -1).split("T", 1).toString();
+			Pass_Records = await Pass_Record.findAll(
+				{
+					where: {
+						[Op.and]: [
+							{deleted_flag			: 0},
+							{pass_direction			: {[Op.substring]: turno}},
+							{pass_temperature_state	: {[Op.substring]: temp}},
+							{person_name			: {[Op.substring]: name}},
+							{person_no				: {[Op.substring]: rut}},
+							{group_name				: {[Op.substring]: employee}},
+							{pass_create_time		: {[Op.substring]: fechaActual}}
+						],
+					},
+					order: [
+						['pass_create_time', 'DESC']],
+					limit: 5000
+				}
+			);
+		}else{
+			fechaActual = sumarDias(fecha,0);
+			fechaAnterior = restarDias(fecha, intervalo+1);	
+			Pass_Records = await Pass_Record.findAll(
+				{
+					where: {
+						[Op.and]: [
+							{deleted_flag			: 0},
+							{pass_direction			: {[Op.substring]: turno}},
+							{pass_temperature_state	: {[Op.substring]: temp}},
+							{person_name			: {[Op.substring]: name}},
+							{person_no				: {[Op.substring]: rut}},
+							{group_name				: {[Op.substring]: employee}},
+							{pass_create_time		: {[Op.between]: [fechaAnterior, fechaActual]}}
+						],
+					},
+					order: [
+						['pass_create_time', 'DESC']],
+					limit: 5000
+				}
+			);
+		}
+	
 
 		Pass_Records.map((pass:any)=>{
 			const urls = pass.dataValues.person_resource_url
@@ -103,13 +130,12 @@ export const downloadReportNomina = async (req: Request, res: Response) => {
         const now = new Date();
 		const intervalo = req.body.intervalo || 365;
 		const initDate = req.body.fecha || formatDate(now)
-		const fecha = new Date(initDate);
-		const fechaActual = sumarDias(fecha, 1).split("T", 1).toString();
-		const fechaAnterior = restarDias(fecha, intervalo).split("T", 1).toString();
+
 
 		let contratista = req.body.contratista || "";
 		let employee;
 		if (contratista == "all") {contratista = ""}
+
 
 
 		if (userAuth.role === "USC") {
@@ -119,34 +145,74 @@ export const downloadReportNomina = async (req: Request, res: Response) => {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
 
-
-		const Persons = await Person.findAll(
-			{
-				attributes: [
-					'id', 
-					'email', 
-					'person_name', 
-					['update_time', 'create_time'],
-					'status',
-					['avatar_url', 'avatar'], 
-					['person_no','id_card'],
-					['employee_name','empresa'],
-					['employment_name', 'ocupacion']
-				],
-				where: {
-					[Op.and]: [
-						{person_name: {[Op.substring]: name}},
-						{person_no: {[Op.substring]: rut}},
-						{employee_name: {[Op.substring]: employee}},
-						{deleted_flag: 0},
-						{update_time: {[Op.between]: [fechaAnterior, fechaActual]}}
+		let Persons!:any
+		const fecha = new Date(initDate);
+		let fechaActual
+		let fechaAnterior
+		
+		if(intervalo == -1){
+			fechaActual = sumarDias(fecha, -1).split("T", 1).toString();
+			Persons = await Person.findAll(
+				{
+					attributes: [
+						'id', 
+						'email', 
+						'person_name', 
+						['update_time', 'create_time'],
+						'status',
+						['avatar_url', 'avatar'], 
+						['person_no','id_card'],
+						['employee_name','empresa'],
+						['employment_name', 'ocupacion']
 					],
-				},
-				order: [
-					['update_time', 'DESC']],
-				limit: 500
-			}
-		);
+					where: {
+						[Op.and]: [
+							{person_name: {[Op.substring]: name}},
+							{person_no: {[Op.substring]: rut}},
+							{employee_name: {[Op.substring]: employee}},
+							{deleted_flag: 0},
+							{update_time: {[Op.substring]: fechaAnterior}}
+						],
+					},
+					order: [
+						['update_time', 'DESC']],
+					limit: 5000
+				}
+			);
+
+		}else{
+			fechaActual = sumarDias(fecha,0);
+			fechaAnterior = restarDias(fecha, intervalo+1);	
+			Persons = await Person.findAll(
+				{
+					attributes: [
+						'id', 
+						'email', 
+						'person_name', 
+						['update_time', 'create_time'],
+						'status',
+						['avatar_url', 'avatar'], 
+						['person_no','id_card'],
+						['employee_name','empresa'],
+						['employment_name', 'ocupacion']
+					],
+					where: {
+						[Op.and]: [
+							{person_name: {[Op.substring]: name}},
+							{person_no: {[Op.substring]: rut}},
+							{employee_name: {[Op.substring]: employee}},
+							{deleted_flag: 0},
+							{update_time: {[Op.between]: [fechaAnterior, fechaActual]}}
+						],
+					},
+					order: [
+						['update_time', 'DESC']],
+					limit: 5000
+				}
+			);
+		}
+
+	
 
 		const wb = new xl.Workbook();
 		const ws = wb.addWorksheet("Sheet 1");
@@ -166,7 +232,7 @@ export const downloadReportNomina = async (req: Request, res: Response) => {
 		ws.cell(1, 5).string("Ocupacion").style(style);
 		ws.cell(1, 6).string("Avatar").style(style);
 		
-		await Persons?.forEach((row: any, index) => {
+		await Persons?.forEach((row: any, index:any) => {
 			console.log(row.dataValues);
 			ws.cell(index + 2, 1).date(new Date(row?.create_time));
 			ws.cell(index + 2, 2).string(row?.dataValues.id_card || "");
@@ -306,9 +372,6 @@ export const downloadReportRecords = async (req: Request, res: Response) => {
 		const intervalo = req.body.intervalo || 365;
 		const initDate = req.body.fecha || formatDate(now)
 
-		const fecha = new Date(initDate);
-		const fechaActual = sumarDias(fecha, 1).split("T", 1).toString();
-		const fechaAnterior = restarDias(fecha, intervalo).split("T", 1).toString();
 
 		let employee;
 		let temp = req.body.temp || "";
@@ -325,26 +388,56 @@ export const downloadReportRecords = async (req: Request, res: Response) => {
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
+		let Pass_Records!:any
+		const fecha = new Date(initDate);
+		let fechaActual
+		let fechaAnterior
+		
+		if(intervalo == -1){
+			fechaActual = sumarDias(fecha, -1).split("T", 1).toString();
+			Pass_Records = await Pass_Record.findAll(
+				{
+					where: {
+						[Op.and]: [
+							{deleted_flag			: 0},
+							{pass_direction			: {[Op.substring]: turno}},
+							{pass_temperature_state	: {[Op.substring]: temp}},
+							{person_name			: {[Op.substring]: name}},
+							{person_no				: {[Op.substring]: rut}},
+							{group_name				: {[Op.substring]: employee}},
+							{pass_create_time		: {[Op.substring]: fechaAnterior}}
+						],
+					},
+					order: [
+						['pass_create_time', 'DESC']],
+					limit: 10000
+				}
+			);
 
+		}else{
+			fechaActual = sumarDias(fecha,0);
+			fechaAnterior = restarDias(fecha, intervalo+1);	
+			Pass_Records = await Pass_Record.findAll(
+				{
+					where: {
+						[Op.and]: [
+							{deleted_flag			: 0},
+							{pass_direction			: {[Op.substring]: turno}},
+							{pass_temperature_state	: {[Op.substring]: temp}},
+							{person_name			: {[Op.substring]: name}},
+							{person_no				: {[Op.substring]: rut}},
+							{group_name				: {[Op.substring]: employee}},
+							{pass_create_time		: {[Op.between]: [fechaAnterior, fechaActual]}}
+						],
+					},
+					order: [
+						['pass_create_time', 'DESC']],
+					limit: 10000
+				}
+			);
+		}
 
-		const Pass_Records = await Pass_Record.findAll(
-			{
-				where: {
-					[Op.and]: [
-						{deleted_flag			: 0},
-						{pass_direction			: {[Op.substring]: turno}},
-						{pass_temperature_state	: {[Op.substring]: temp}},
-						{person_name			: {[Op.substring]: name}},
-						{person_no				: {[Op.substring]: rut}},
-						{group_name				: {[Op.substring]: employee}},
-						{pass_create_time		: {[Op.between]: [fechaAnterior, fechaActual]}}
-					],
-				},
-				order: [
-					['pass_create_time', 'DESC']],
-				limit: 10000
-			}
-		);
+	
 
 		const wb = new xl.Workbook();
 		const ws = wb.addWorksheet("Sheet 1");
@@ -368,7 +461,7 @@ export const downloadReportRecords = async (req: Request, res: Response) => {
 		ws.cell(1, 10).string("Nombre").style(style);
 		ws.cell(1, 11).string("Avatar").style(style);
 
-		await Pass_Records?.forEach((row: any, index) => {
+		await Pass_Records?.forEach((row: any, index:any) => {
 			ws.cell(index + 2, 1).string(row?.pass_type || "");
 			ws.cell(index + 2, 2).number(row?.pass_direction);
 			ws.cell(index + 2, 3).date(new Date(row?.pass_create_time));
@@ -440,9 +533,6 @@ export const downloadReportCalculoHora = async (req: Request, res: Response) => 
 		} else {
 			!contratista ? (employee = "") : (employee = contratista);
 		}
-
-
-
 
         const asistencia = await db.query(`
             SELECT MIN(app_pass_records.pass_time) AS entrada, MAX(app_pass_records.pass_time) AS salida, CAST(pass_create_time AS DATE) AS fecha, person_resource_url, person_name, person_no , group_name, calculated_shift

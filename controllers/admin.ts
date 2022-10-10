@@ -199,6 +199,7 @@ export const addTurnoEfectivo = async (req: Request, res: Response) => {
 // ************************************************************************************************************************
 // !                                              OBTENGO TODO LOS TURNOS
 // ************************************************************************************************************************
+
 export const getAllTurnos = async (req: Request, res: Response) => {
     try{
         const shift_config = await Shift_Config.findAll({ where: {deleted_flag:0} });
@@ -208,7 +209,6 @@ export const getAllTurnos = async (req: Request, res: Response) => {
         res.status(500).json({ msg: "Contact the administrator" });
     }
 }
-
 
 
 // ************************************************************************************************************************
